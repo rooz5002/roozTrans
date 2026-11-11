@@ -15,7 +15,7 @@ Bump `version.properties` before each upload. Play rejects a versionCode it has 
 - **Category:** Travel & Local (or Tools)
 - **Contains ads:** No
 - **Target audience:** 18+ (avoids the children's policy requirements)
-- **Privacy policy URL:** https://github.com/rooz5002/roozTrans/blob/main/PRIVACY.md
+- **Privacy policy URL:** https://rooz.com/rooztrans/privacy.html
 
 ## 3. Store listing
 **Short description (≤80):**

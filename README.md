@@ -34,6 +34,8 @@ There are two **flavours**:
 - `update.token`: shared secret between the app and `server/update.php`.
 - `keystore.properties`: Play upload key (see `keystore.properties.example`).
 
+`server/build-legal.py` renders TERMS.md / PRIVACY.md into `server/legal/*.html` for hosting on a website.
+
 `server/update.php` is a small PHP endpoint that serves the latest APK with resume (HTTP Range) support. Put the APK and `version.json` in a folder outside the web root.
 
 ## Privacy

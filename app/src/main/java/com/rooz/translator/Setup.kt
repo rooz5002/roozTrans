@@ -43,6 +43,7 @@ fun AppCompatActivity.openUrl(u: String) { runCatching { startActivity(Intent(In
 
 object Links {
     const val SOURCE = "https://github.com/rooz5002/roozTrans"
-    const val TERMS = "$SOURCE/blob/main/TERMS.md"
-    const val PRIVACY = "$SOURCE/blob/main/PRIVACY.md"
+    // hosted on our own site so they keep working even if the repo goes private (Play needs a public privacy URL)
+    const val TERMS = "https://rooz.com/rooztrans/terms.html"
+    const val PRIVACY = "https://rooz.com/rooztrans/privacy.html"
 }
