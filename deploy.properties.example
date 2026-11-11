@@ -1,0 +1,6 @@
+# Copy to deploy.properties (untracked) to enable self-updates in the "direct" build and ./deploy.sh.
+# Leave updateUrl empty (or skip this file) to build without a self-updater.
+updateUrl=https://example.com/rooztrans/update.php
+host=user@your-server
+dir=/path/outside/docroot/rooztrans-private
+owner=www-user:www-user

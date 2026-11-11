@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">roozTrans</string>
+    <string name="settings">Settings</string>
+    <string name="service_label">roozTrans screen translator</string>
+    <string name="tile_label">Translate screen</string>
+    <string name="service_desc">Shows a floating bubble. Tapping it (or double-pressing Volume Down) takes a screenshot, reads the text on the phone, and overlays the English/Chinese translation. Screenshots never leave the phone; only the recognised text is sent online, and only if online translation is on.</string>
+    <string name="a11y_disclosure">To translate other apps\' screens, roozTrans needs Android\'s Accessibility service. It uses it only to:\n\n• show the floating translate bubble on top of other apps\n• take a screenshot when YOU tap the bubble, the Quick Settings tile, or double-press Volume Down\n• listen for that Volume Down double-press (no other keys are recorded)\n\nThe screenshot is read on the phone and then deleted. It is never uploaded or stored. If you have turned on online translation and added your own API key, only the recognised text is sent to the AI service you chose (Claude, OpenAI or DeepSeek) to translate it.\n\nroozTrans does not read your screen in the background, does not collect personal data, and does not control other apps. You can turn it off any time in Settings → Accessibility.</string>
+</resources>

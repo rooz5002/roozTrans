@@ -1,0 +1,13 @@
+build/
+.gradle/
+local.properties
+.sdk-install.log
+*.apk
+update.token
+download-password.txt
+.kotlin/
+deploy.properties
+keystore.properties
+*.jks
+*.keystore
+*.aab

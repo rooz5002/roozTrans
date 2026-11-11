@@ -1,0 +1,116 @@
+<resources>
+    <!-- default (used by the manifest); each palette below is applied with setTheme() -->
+    <style name="AppTheme" parent="Theme.Clay" />
+    <style name="Theme.Clay" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#C96442</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#C96442</item>
+        <item name="colorPrimaryContainer">#F0EEE6</item>
+        <item name="colorSurface">#FAF9F5</item>
+        <item name="colorOnSurface">#1F1E1D</item>
+        <item name="colorOnBackground">#1F1E1D</item>
+        <item name="android:colorBackground">#FAF9F5</item>
+        <item name="android:windowBackground">#FAF9F5</item>
+        <item name="android:textColorPrimary">#1F1E1D</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="Theme.Red" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#C62828</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#C62828</item>
+        <item name="colorPrimaryContainer">#F4F0EF</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#1C1B1B</item>
+        <item name="colorOnBackground">#1C1B1B</item>
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:textColorPrimary">#1C1B1B</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="Theme.Ink" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#111111</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#111111</item>
+        <item name="colorPrimaryContainer">#F2F2F2</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#111111</item>
+        <item name="colorOnBackground">#111111</item>
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:textColorPrimary">#111111</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="Theme.Ocean" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#1F6FEB</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#1F6FEB</item>
+        <item name="colorPrimaryContainer">#EEF3FA</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#14202E</item>
+        <item name="colorOnBackground">#14202E</item>
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:textColorPrimary">#14202E</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="Theme.Jade" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#0E8A64</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#0E8A64</item>
+        <item name="colorPrimaryContainer">#ECF3EF</item>
+        <item name="colorSurface">#FBFCFB</item>
+        <item name="colorOnSurface">#15221C</item>
+        <item name="colorOnBackground">#15221C</item>
+        <item name="android:colorBackground">#FBFCFB</item>
+        <item name="android:windowBackground">#FBFCFB</item>
+        <item name="android:textColorPrimary">#15221C</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="Theme.Plum" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">#7A4CC2</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#7A4CC2</item>
+        <item name="colorPrimaryContainer">#F4F0F8</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#1E1A24</item>
+        <item name="colorOnBackground">#1E1A24</item>
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:textColorPrimary">#1E1A24</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="Theme.Midnight" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#E3A857</item>
+        <item name="colorOnPrimary">#1A1A1E</item>
+        <item name="colorSecondary">#E3A857</item>
+        <item name="colorPrimaryContainer">#27272D</item>
+        <item name="colorSurface">#1A1A1E</item>
+        <item name="colorOnSurface">#ECECEC</item>
+        <item name="colorOnBackground">#ECECEC</item>
+        <item name="android:colorBackground">#1A1A1E</item>
+        <item name="android:windowBackground">#1A1A1E</item>
+        <item name="android:textColorPrimary">#ECECEC</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+    <style name="Theme.Graphite" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#FF5A52</item>
+        <item name="colorOnPrimary">#121212</item>
+        <item name="colorSecondary">#FF5A52</item>
+        <item name="colorPrimaryContainer">#1F1F1F</item>
+        <item name="colorSurface">#121212</item>
+        <item name="colorOnSurface">#EDEDED</item>
+        <item name="colorOnBackground">#EDEDED</item>
+        <item name="android:colorBackground">#121212</item>
+        <item name="android:windowBackground">#121212</item>
+        <item name="android:textColorPrimary">#EDEDED</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>
