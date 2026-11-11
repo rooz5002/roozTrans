@@ -19,7 +19,7 @@ Requires JDK 17+ and the Android SDK (compileSdk 36).
 
 ```sh
 ./gradlew assembleDirectRelease   # APK to share yourself
-./gradlew bundlePlayRelease       # AAB for Google Play
+./gradlew bundlePlayRelease       # AAB for Google Play (see play/README.md)
 ```
 
 There are two **flavours**:
