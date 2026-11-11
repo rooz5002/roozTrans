@@ -14,7 +14,7 @@ Only in these cases:
 | What | Sent to | When |
 |---|---|---|
 | The **recognised or typed text** to translate (not images) | The AI provider you chose: Anthropic (Claude), OpenAI, or DeepSeek | Only if you have turned on online translation **and** entered your own API key for that provider |
-| A request to find your **country from your IP address** (no other data) | ipinfo.io, api.country.is, ipapi.co, myip.ipip.net | When online translation is on, to choose a provider that works in your country (for example, DeepSeek in mainland China) |
+| A request to find your **country from your IP address** (no other data) | ipinfo.io, api.country.is, ipapi.co, myip.ipip.net | Only once you have added an API key (or tap "Check network" in Settings), to choose a provider that works in your country (for example, DeepSeek in mainland China) |
 | Offline language-pack download, plus limited diagnostic and usage data collected by Google's ML Kit library | Google | When you download the offline packs, and as described in [Google's ML Kit terms](https://developers.google.com/ml-kit/terms) |
 | An update check (no personal data) | The developer's website | **Direct-download version only.** The Google Play version is updated by Google Play |
 

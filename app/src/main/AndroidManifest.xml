@@ -38,6 +38,7 @@
         </activity>
 
         <activity android:name=".ImageActivity" android:exported="false" />
+        <activity android:name=".WelcomeActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false"
             android:label="@string/settings" />
 

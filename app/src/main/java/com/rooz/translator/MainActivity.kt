@@ -143,6 +143,7 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(b.left, b.top, b.right, b.bottom); ins
         }
         setContentView(root)
+        if (savedInstanceState == null && !prefs.onboarded) startActivity(Intent(this, WelcomeActivity::class.java))
         handleIntent(intent)
     }
 

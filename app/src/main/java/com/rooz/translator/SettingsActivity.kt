@@ -48,7 +48,7 @@ class SettingsActivity : AppCompatActivity() {
                 addView(label("Screen translator", 16f, bold = true))
                 addView(label("Tap the floating bubble, double-press Volume Down, or use the \"Translate screen\" Quick Settings tile.", 13f).apply { alpha = .7f })
                 svcTv = label(""); addView(svcTv)
-                addView(button("Turn on screen translator", outlined = true) { openAccessibility() })
+                addView(button("Turn on screen translator", outlined = true) { openAccessibilitySetup() })
                 modelsTv = label(""); addView(modelsTv)
                 addView(button("Download offline language packs", outlined = true) { downloadModels() })
                 netTv = label(""); addView(netTv)
@@ -112,16 +112,17 @@ class SettingsActivity : AppCompatActivity() {
         root.addView(card {
             addView(label("About · roozTrans v${BuildConfig.VERSION_NAME}", 16f, bold = true))
             addView(label("Free, no ads, no tracking. Machine translation can be wrong — don't rely on it for medical, legal, safety or other important decisions.", 13f).apply { alpha = .7f })
-            addView(button("Terms of use & disclaimer", outlined = true) { openUrl(TERMS_URL) })
-            addView(button("Privacy policy", outlined = true) { openUrl(PRIVACY_URL) })
-            addView(button("Source code", outlined = true) { openUrl(SOURCE_URL) })
+            addView(button("Setup guide", outlined = true) { startActivity(android.content.Intent(this@SettingsActivity, WelcomeActivity::class.java)) })
+            addView(button("Terms of use & disclaimer", outlined = true) { openUrl(Links.TERMS) })
+            addView(button("Privacy policy", outlined = true) { openUrl(Links.PRIVACY) })
+            addView(button("Source code", outlined = true) { openUrl(Links.SOURCE) })
         })
         val scroll = ScrollView(this).apply { addView(root) }
         ViewCompat.setOnApplyWindowInsetsListener(scroll) { v, ins ->
             val b = ins.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()); v.setPadding(b.left, b.top, b.right, b.bottom); ins
         }
         setContentView(scroll)
-        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_ENABLE_A11Y, false)) openAccessibility()
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_ENABLE_A11Y, false)) openAccessibilitySetup()
     }
 
     private fun android.widget.LinearLayout.field(name: String, value: String, secret: Boolean = false, save: (String) -> Unit) {
@@ -169,36 +170,6 @@ class SettingsActivity : AppCompatActivity() {
         setOnClickListener { onClick() }
     }
 
-    /**
-     * Google Play "prominent disclosure": say what the accessibility service does and get a clear yes
-     * before sending the user to Android's Accessibility settings.
-     */
-    private fun openAccessibility() {
-        if (prefs.a11yConsent) { showAccessibilitySteps(); return }
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("roozTrans uses the Accessibility service")
-            .setMessage(getString(R.string.a11y_disclosure))
-            .setPositiveButton("Agree") { _, _ -> prefs.a11yConsent = true; showAccessibilitySteps() }
-            .setNegativeButton("No thanks", null)
-            .setCancelable(false)
-            .show()
-    }
-
-    private fun showAccessibilitySteps() {
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Turn on screen translator")
-            .setMessage("1. Tap \"Accessibility\" → Installed apps → roozTrans screen translator → On.\n\n" +
-                "If you see \"App was denied access\" / \"Restricted setting\":\n" +
-                "2. Tap \"App info\" below → ⋮ (top right) → Allow restricted settings → confirm.\n" +
-                "3. Then come back and do step 1 again.\n\n" +
-                "Samsung: if ⋮ has no such option, turn off Settings → Security and privacy → Auto Blocker first.")
-            .setPositiveButton("Accessibility") { _, _ -> startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
-            .setNeutralButton("App info") { _, _ ->
-                startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:$packageName")))
-            }
-            .show()
-    }
-
     private fun downloadModels() {
         modelsTv.text = "⏳ Downloading (~60 MB)…"
         lifecycleScope.launch {
@@ -213,14 +184,7 @@ class SettingsActivity : AppCompatActivity() {
         lifecycleScope.launch { netTv.text = Online(this@SettingsActivity).route(force).describe() }
     }
 
-    private fun openUrl(u: String) { runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(u))) } }
-
-    companion object {
-        const val EXTRA_ENABLE_A11Y = "enable_a11y"
-        const val SOURCE_URL = "https://github.com/rooz5002/roozTrans"
-        const val TERMS_URL = "$SOURCE_URL/blob/main/TERMS.md"
-        const val PRIVACY_URL = "$SOURCE_URL/blob/main/PRIVACY.md"
-    }
+    companion object { const val EXTRA_ENABLE_A11Y = "enable_a11y" }
 
     private fun saveAll() = saves.forEach { it() }
     override fun onPause() { saveAll(); super.onPause() }

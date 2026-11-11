@@ -92,6 +92,8 @@ class Online(private val ctx: Context) {
     suspend fun route(force: Boolean = false): Route {
         val mode = prefs.mode
         if (mode == "offline") return Route(null, emptyList())
+        // no API key at all: nothing could go online, so don't even look up the country (privacy)
+        if (!force && listOf("claude", "openai", "deepseek").none(::hasKey)) return Route(null, emptyList())
         val c = country(force)
         val order = when {
             mode != "auto" -> listOf(mode)

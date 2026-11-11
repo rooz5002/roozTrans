@@ -20,6 +20,8 @@ class Prefs(ctx: Context) {
     var volumeTrigger by bool("volume_trigger", true)
     /** user agreed to the accessibility-service disclosure */
     var a11yConsent by bool("a11y_consent", false)
+    /** first-run welcome / setup guide finished */
+    var onboarded by bool("onboarded", false)
     /** After the instant offline result, also fetch a better online one. */
     var onlineEnhance by bool("online_enhance", true)
 
