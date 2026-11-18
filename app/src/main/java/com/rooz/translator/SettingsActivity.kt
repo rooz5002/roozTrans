@@ -1,136 +1,183 @@
 package com.rooz.translator
 
+import android.content.Intent
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.text.InputType
-import android.widget.ArrayAdapter
-import android.widget.EditText
-import android.widget.ScrollView
-import android.widget.Spinner
-import android.widget.TextView
+import android.view.Gravity
 import android.view.View
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SwitchCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.launch
 
+/**
+ * Settings, one compact card per topic, each with its own colour stripe:
+ * offline method · online AI · languages · personalise · screen translator · updates · about.
+ */
 class SettingsActivity : AppCompatActivity() {
     private lateinit var prefs: Prefs
+    private lateinit var pal: Palette
     private val saves = ArrayList<() -> Unit>()
     private lateinit var svcTv: TextView
+    private lateinit var svcBtn: MaterialButton
     private lateinit var batTv: TextView
     private lateinit var modelsTv: TextView
     private lateinit var netTv: TextView
-    private val modes = listOf("auto" to "Auto (by IP country)", "offline" to "Offline only",
-        "claude" to "Always Claude", "openai" to "Always OpenAI", "deepseek" to "Always DeepSeek")
+    private lateinit var modeHint: TextView
+    private val keyDots = HashMap<String, TextView>()
+
+    // card colours: readable on both the light and the dark palettes
+    private fun hue(light: String, dark: String) = Color.parseColor(if (pal.dark) dark else light)
+    private val cOffline get() = hue("#2E7D32", "#81C784")
+    private val cOnline get() = hue("#1565C0", "#64B5F6")
+    private val cLang get() = hue("#6A1B9A", "#CE93D8")
+    private val cLook get() = pal.accent
+    private val cScreen get() = hue("#E65100", "#FFB74D")
+    private val cUpdate get() = hue("#00838F", "#4DD0E1")
+    private val cAbout get() = hue("#546E7A", "#B0BEC5")
+    private val cOk get() = hue("#2E7D32", "#81C784")
+    private val cWarn get() = hue("#B26A00", "#FFB74D")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Themes.apply(this)
         super.onCreate(savedInstanceState)
-        prefs = Prefs(this)
-        val pal = Themes.current(this)
-        lateinit var testTv: TextView
-        val root = vbox(16) {
-            addView(label("Settings", 22f, bold = true).apply { setPadding(0, 0, 0, dp(12)) })
-            addView(card {
-                addView(label("Colour", 16f, bold = true))
-                addView(label("Tap one to try it — the whole app changes straight away.", 13f).apply { alpha = .7f })
-                Themes.all.chunked(4).forEach { row ->
-                    addView(hbox {
-                        setPadding(0, dp(10), 0, 0)
-                        row.forEach { p -> weighted(swatch(p, p.id == pal.id) {
-                            if (p.id != prefs.theme) { saveAll(); prefs.theme = p.id; recreate() }
-                        }) }
-                    })
-                }
-            })
-            addView(card {
-                addView(label("Screen translator", 16f, bold = true))
-                addView(label("Tap the floating bubble, double-press Volume Down, or use the \"Translate screen\" Quick Settings tile.", 13f).apply { alpha = .7f })
-                svcTv = label(""); addView(svcTv)
-                addView(button("Turn on screen translator", outlined = true) {
-                    val st = KeepAlive.state(this@SettingsActivity)
-                    if (st == KeepAlive.State.STUCK) KeepAlive.showRepair(this@SettingsActivity, st) else openAccessibilitySetup()
-                })
-                batTv = label(""); addView(batTv)
-                addView(button("Keep it on (battery settings)", outlined = true) { KeepAlive.showGuide(this@SettingsActivity) })
-                addView(switch("Show pinyin (拼音) with Chinese", prefs.showPinyin) { prefs.showPinyin = it })
-                addView(label("Screen: first tap shows pinyin, second the English, third closes. Pinch or double-tap to zoom.", 13f).apply { alpha = .7f })
-                modelsTv = label(""); addView(modelsTv)
-                addView(button("Download offline language packs", outlined = true) { downloadModels() })
-                netTv = label(""); addView(netTv)
-                addView(button("Check network / which AI", outlined = true) { checkNet(force = true) })
-            })
-            addView(card {
-                addView(label("Online translation", 16f, bold = true))
-                addView(label("Auto: in mainland China → DeepSeek. Elsewhere → Claude, then OpenAI, then DeepSeek. Offline is always the fallback.", 13f).apply { alpha = .7f })
-                val sp = Spinner(context).apply {
-                    adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, modes.map { it.second })
-                    setSelection(modes.indexOfFirst { it.first == prefs.mode }.coerceAtLeast(0))
-                }
-                addView(sp); saves += { prefs.mode = modes[sp.selectedItemPosition].first }
-                addView(switch("Improve offline result online (when available)", prefs.onlineEnhance) { prefs.onlineEnhance = it })
-            })
-            addView(card {
-                addView(label("API keys (stored only on this phone)", 16f, bold = true))
-                field("Claude API key", prefs.claudeKey, secret = true) { prefs.claudeKey = it }
-                field("Claude model", prefs.claudeModel) { prefs.claudeModel = it }
-                field("OpenAI API key", prefs.openaiKey, secret = true) { prefs.openaiKey = it }
-                field("OpenAI model", prefs.openaiModel) { prefs.openaiModel = it }
-                field("DeepSeek API key", prefs.deepseekKey, secret = true) { prefs.deepseekKey = it }
-                field("DeepSeek model", prefs.deepseekModel) { prefs.deepseekModel = it }
-            })
-            addView(card {
-                addView(label("Triggers", 16f, bold = true))
-                addView(switch("Floating bubble", prefs.showBubble) { prefs.showBubble = it; TranslatorService.instance?.refreshBubble() })
-                addView(switch("Double-press Volume Down = translate screen", prefs.volumeTrigger) { prefs.volumeTrigger = it })
-            })
-            if (Updater.ENABLED) addView(card {
-                addView(label("Updates · installed v${BuildConfig.VERSION_NAME}", 16f, bold = true))
-                addView(switch("Update automatically", prefs.autoUpdate) { prefs.autoUpdate = it })
-                addView(switch("Only on Wi-Fi (updates are ~60 MB)", prefs.updateWifiOnly) { prefs.updateWifiOnly = it })
-                val st = label(Updater.clearStaleStatus(this@SettingsActivity).let { prefs.updateStatus }, 13f).apply { alpha = .75f }
-                addView(button("Check for updates now", outlined = true) {
-                    if (!packageManager.canRequestPackageInstalls()) {
-                        st.text = "Allow \"Install unknown apps\" for roozTrans, then come back and tap again."
-                        startActivity(android.content.Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                            android.net.Uri.parse("package:$packageName")))
-                        return@button
-                    }
-                    st.text = "⏳ Checking…"
-                    lifecycleScope.launch { st.text = runCatching { Updater.checkAndInstall(this@SettingsActivity) }.getOrElse { "✗ ${it.message}" } }
-                })
-                addView(st)
-            })
-            addView(card {
-                addView(label("Test", 16f, bold = true))
-                testTv = label("", 14f).apply { setTextIsSelectable(true) }
-                addView(button("Test network + all 3 services") {
-                    saveAll(); testTv.text = "⏳ testing…"
+        prefs = Prefs(this); pal = Themes.current(this)
+
+        val root = vbox().apply { setPadding(dp(12), dp(8), dp(12), dp(16)) }
+        root.addView(TextView(this).apply {
+            text = "Settings"; textSize = 20f; setTypeface(typeface, Typeface.BOLD); setTextColor(pal.text)
+            setPadding(dp(4), dp(4), 0, dp(8))
+        })
+
+        // ---------- 1. offline ----------
+        root.addView(section("📴", "Offline translation", cOffline) {
+            hint("Works with no internet. Used first, and always as the fallback.")
+            addView(choice(listOf(
+                "fast" to "Fast · on phone (~60 MB)",
+                "quality" to "High quality · AI model (~1 GB)",
+            ), prefs.offlineEngine, cOffline, disabled = setOf("quality")) { prefs.offlineEngine = it })
+            hint("High quality needs a newer phone (6 GB+ RAM). Coming in the next version.")
+            modelsTv = status(); addView(row(modelsTv, small("Download", cOffline) { downloadModels() }))
+        })
+
+        // ---------- 2. online AI ----------
+        root.addView(section("🌐", "Online AI (your own key)", cOnline) {
+            hint("Better, more natural translations when there is internet. Off until you add a key.")
+            addView(choice(listOf("offline" to "Off", "auto" to "Auto", "claude" to "Claude", "openai" to "OpenAI", "deepseek" to "DeepSeek"),
+                prefs.mode, cOnline) { prefs.mode = it; showModeHint(); refreshKeys() })
+            modeHint = hint(""); showModeHint()
+            keyRow("claude", "Claude", prefs.claudeKey) { prefs.claudeKey = it }
+            keyRow("openai", "OpenAI", prefs.openaiKey) { prefs.openaiKey = it }
+            keyRow("deepseek", "DeepSeek", prefs.deepseekKey) { prefs.deepseekKey = it }
+            addView(sw("Improve the offline result online", prefs.onlineEnhance) { prefs.onlineEnhance = it })
+            // model names: rarely changed, so folded away
+            val adv = vbox().apply { visibility = View.GONE }
+            adv.field("Claude model", prefs.claudeModel) { prefs.claudeModel = it }
+            adv.field("OpenAI model", prefs.openaiModel) { prefs.openaiModel = it }
+            adv.field("DeepSeek model", prefs.deepseekModel) { prefs.deepseekModel = it }
+            netTv = status()
+            val testTv = status().apply { setTextIsSelectable(true); visibility = View.GONE }
+            addView(buttons(
+                small("Check network", cOnline) { checkNet(force = true) },
+                small("Test keys", cOnline) {
+                    saveAll(); testTv.visibility = View.VISIBLE; testTv.text = "⏳ testing…"
                     lifecycleScope.launch {
                         val o = Online(this@SettingsActivity)
-                        val sb = StringBuilder(o.route(force = true).describe())
-                        for (p in listOf("claude", "openai", "deepseek")) { sb.append("\n\n").append(o.test(p)); testTv.text = sb }
+                        val sb = StringBuilder()
+                        for (p in listOf("claude", "openai", "deepseek")) { sb.append(o.test(p)).append('\n'); testTv.text = sb.trim() }
                     }
-                })
-                addView(testTv)
-            })
-        }
-        root.addView(card {
-            addView(label("About · roozTrans v${BuildConfig.VERSION_NAME}", 16f, bold = true))
-            addView(label("Free, no ads, no tracking. Machine translation can be wrong — don't rely on it for medical, legal, safety or other important decisions.", 13f).apply { alpha = .7f })
-            addView(button("Setup guide", outlined = true) { startActivity(android.content.Intent(this@SettingsActivity, WelcomeActivity::class.java)) })
-            addView(button("Terms of use & disclaimer", outlined = true) { openUrl(Links.TERMS) })
-            addView(button("Privacy policy", outlined = true) { openUrl(Links.PRIVACY) })
-            addView(button("Contact us / report a problem", outlined = true) { openUrl(Links.CONTACT) })
-            addView(button("Source code", outlined = true) { openUrl(Links.SOURCE) })
+                },
+                small("Models…", cOnline) { adv.visibility = if (adv.visibility == View.GONE) View.VISIBLE else View.GONE },
+            ))
+            addView(netTv); addView(testTv); addView(adv)
         })
-        val scroll = ScrollView(this).apply { addView(root) }
+
+        // ---------- 3. languages ----------
+        root.addView(section("🔤", "Languages", cLang) {
+            addView(status().apply { text = "English ⇄ 中文 (Simplified Chinese)"; setTextColor(pal.text) })
+            hint("More languages are coming in the next version.")
+            addView(sw("Show pinyin (拼音) with Chinese", prefs.showPinyin) { prefs.showPinyin = it })
+        })
+
+        // ---------- 4. personalise ----------
+        root.addView(section("🎨", "Personalise", cLook) {
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                Themes.all.forEach { p ->
+                    addView(swatch(p, p.id == pal.id) { if (p.id != prefs.theme) { saveAll(); prefs.theme = p.id; recreate() } },
+                        LinearLayout.LayoutParams(0, -2, 1f))
+                }
+            })
+        })
+
+        // ---------- 5. screen translator ----------
+        root.addView(section("⚡", "Screen translator · triggers", cScreen) {
+            svcTv = status()
+            svcBtn = small("Turn on", cScreen) {
+                val st = KeepAlive.state(this@SettingsActivity)
+                if (st == KeepAlive.State.STUCK) KeepAlive.showRepair(this@SettingsActivity, st) else openAccessibilitySetup()
+            }
+            addView(row(svcTv, svcBtn))
+            batTv = status()
+            addView(row(batTv, small("Keep it on", cScreen) { KeepAlive.showGuide(this@SettingsActivity) }))
+            addView(sw("Floating bubble", prefs.showBubble) { prefs.showBubble = it; TranslatorService.instance?.refreshBubble() })
+            addView(sw("Double-press Volume Down", prefs.volumeTrigger) { prefs.volumeTrigger = it })
+            hint("Or use the \"Translate screen\" Quick Settings tile. On screen: tap the bubble for pinyin, again for the translation, again to close. Pinch to zoom.")
+        })
+
+        // ---------- 6. updates (direct-download build only) ----------
+        if (Updater.ENABLED) root.addView(section("⬇", "Updates", cUpdate) {
+            addView(sw("Update automatically", prefs.autoUpdate) { prefs.autoUpdate = it })
+            addView(sw("Only on Wi-Fi (~60 MB)", prefs.updateWifiOnly) { prefs.updateWifiOnly = it })
+            Updater.clearStaleStatus(this@SettingsActivity)
+            val st = status().apply { text = prefs.updateStatus.ifBlank { "Installed: v${BuildConfig.VERSION_NAME}" } }
+            addView(row(st, small("Check now", cUpdate) {
+                if (!packageManager.canRequestPackageInstalls()) {
+                    st.text = "Allow \"Install unknown apps\" for roozTrans, then tap again."
+                    startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
+                    return@small
+                }
+                st.text = "⏳ Checking…"
+                lifecycleScope.launch { st.text = runCatching { Updater.checkAndInstall(this@SettingsActivity) }.getOrElse { "✗ ${it.message}" } }
+            }))
+        })
+
+        // ---------- 7. about ----------
+        root.addView(section("ℹ", "About · v${BuildConfig.VERSION_NAME}", cAbout) {
+            hint("Free, no ads, no tracking. Machine translation can be wrong: don't rely on it for medical, legal or safety decisions.")
+            addView(ChipGroup(context).apply {
+                chipSpacingVertical = dp(2); chipSpacingHorizontal = dp(6)
+                listOf("Setup guide" to { startActivity(Intent(this@SettingsActivity, WelcomeActivity::class.java)) },
+                    "Contact us" to { openUrl(Links.CONTACT) },
+                    "Terms" to { openUrl(Links.TERMS) },
+                    "Privacy" to { openUrl(Links.PRIVACY) },
+                    "Source code" to { openUrl(Links.SOURCE) },
+                ).forEach { (t, f) -> addView(actionChip(t, cAbout, f)) }
+            })
+        })
+
+        val scroll = ScrollView(this).apply { addView(root); setBackgroundColor(pal.bg) }
         ViewCompat.setOnApplyWindowInsetsListener(scroll) { v, ins ->
             val b = ins.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()); v.setPadding(b.left, b.top, b.right, b.bottom); ins
         }
         setContentView(scroll)
+        refreshKeys()
         if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_ENABLE_A11Y, false)) {
             val st = KeepAlive.state(this)   // from the Quick Settings tile: stopped by the phone, or never turned on?
             if (st == KeepAlive.State.STUCK || (st == KeepAlive.State.OFF && prefs.a11yWasOn)) KeepAlive.showRepair(this, st)
@@ -138,62 +185,183 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun android.widget.LinearLayout.field(name: String, value: String, secret: Boolean = false, save: (String) -> Unit) {
-        addView(label(name, 13f).apply { setPadding(0, dp(8), 0, 0) })
-        val e = EditText(context).apply {
-            setText(value); isSingleLine = true
-            inputType = if (secret) InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                        else InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-        }
-        addView(e); saves += { save(e.text.toString()) }
-    }
-
-    private fun switch(s: String, v: Boolean, on: (Boolean) -> Unit) = SwitchCompat(this).apply {
-        text = s; isChecked = v; setPadding(0, dp(6), 0, dp(6)); setOnCheckedChangeListener { _, c -> on(c) }
-    }
-
     override fun onResume() {
         super.onResume()
-        svcTv.text = when (KeepAlive.state(this)) {
-            KeepAlive.State.RUNNING -> "✅ Screen translator is ON"
-            KeepAlive.State.STUCK -> "⚠ Screen translator is switched on but Android stopped it. Tap below to fix."
-            KeepAlive.State.OFF -> "⭕ Screen translator is OFF"
+        when (KeepAlive.state(this)) {
+            KeepAlive.State.RUNNING -> { svcTv.text = "● On"; svcTv.setTextColor(cOk); svcBtn.text = "Settings" }
+            KeepAlive.State.STUCK -> { svcTv.text = "● Stopped by the phone"; svcTv.setTextColor(cWarn); svcBtn.text = "Fix" }
+            KeepAlive.State.OFF -> { svcTv.text = "○ Off"; svcTv.setTextColor(pal.muted); svcBtn.text = "Turn on" }
         }
-        batTv.text = KeepAlive.statusLine(this)
+        val bat = KeepAlive.ignoringBattery(this)
+        batTv.text = if (bat) "● Allowed to keep running" else "● Battery saver may stop it"
+        batTv.setTextColor(if (bat) cOk else cWarn)
         lifecycleScope.launch {
-            modelsTv.text = if (runCatching { Offline.modelsReady() }.getOrDefault(false)) "✅ Offline EN/中 packs ready"
-                            else "⚠ Offline packs missing — download before going to China"
+            val ok = runCatching { Offline.modelsReady() }.getOrDefault(false)
+            modelsTv.text = if (ok) "● English/中文 packs ready" else "● Packs not downloaded: download before going to China"
+            modelsTv.setTextColor(if (ok) cOk else cWarn)
         }
         checkNet(force = false)
     }
 
-    /** A round sample of the palette (page colour with its accent dot) and its name; ringed when selected. */
+    // ---------- building blocks ----------
+
+    /** A card with a coloured stripe on the left and a coloured title. */
+    private fun section(icon: String, title: String, color: Int, block: LinearLayout.() -> Unit): View {
+        val body = vbox().apply {
+            setPadding(dp(12), dp(8), dp(10), dp(8))
+            addView(TextView(context).apply {
+                text = "$icon  $title"; textSize = 15f; setTypeface(typeface, Typeface.BOLD); setTextColor(color)
+                setPadding(0, 0, 0, dp(2))
+            })
+            block()
+        }
+        val r = dp(14).toFloat()
+        val bg = GradientDrawable().apply { setColor(pal.surface); cornerRadius = r }
+        val stripe = GradientDrawable().apply { setColor(color); cornerRadii = floatArrayOf(r, r, 0f, 0f, 0f, 0f, r, r) }
+        body.background = LayerDrawable(arrayOf(bg, stripe)).apply {
+            setLayerWidth(1, dp(4)); setLayerGravity(1, Gravity.START or Gravity.FILL_VERTICAL)
+        }
+        body.layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(0, 0, 0, dp(8)) }
+        return body
+    }
+
+    private fun LinearLayout.hint(s: String) = TextView(context).apply {
+        text = s; textSize = 12.5f; setTextColor(pal.muted); setPadding(0, dp(1), 0, dp(3))
+    }.also { addView(it) }
+
+    private fun status() = TextView(this).apply { textSize = 13f; setTextColor(pal.text); setPadding(0, dp(2), 0, dp(2)) }
+
+    /** Text on the left, a small button on the right. */
+    private fun row(left: View, right: View) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
+        addView(left, LinearLayout.LayoutParams(0, -2, 1f)); addView(right)
+    }
+
+    private fun buttons(vararg b: View) = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        b.forEachIndexed { i, v -> addView(v, LinearLayout.LayoutParams(-2, -2).apply { marginEnd = if (i < b.size - 1) dp(6) else 0 }) }
+    }
+
+    /** Compact outlined button in the card's colour. */
+    private fun small(s: String, color: Int, onClick: () -> Unit) =
+        MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = s; isAllCaps = false; textSize = 13f; setTextColor(color)
+            strokeColor = ColorStateList.valueOf(color); strokeWidth = dp(1)
+            minHeight = dp(34); minimumHeight = dp(34); minWidth = 0; minimumWidth = 0
+            insetTop = 0; insetBottom = 0; setPadding(dp(12), 0, dp(12), 0); cornerRadius = dp(17)
+            setOnClickListener { onClick() }
+        }
+
+    private fun actionChip(s: String, color: Int, onClick: () -> Unit) = Chip(this).apply {
+        text = s; textSize = 13f; setTextColor(color); isCheckable = false
+        chipBackgroundColor = ColorStateList.valueOf(Color.TRANSPARENT)
+        chipStrokeColor = ColorStateList.valueOf(color); chipStrokeWidth = dp(1).toFloat()
+        chipMinHeight = dp(32).toFloat(); ensureAccessibleTouchTarget(dp(40))
+        setOnClickListener { onClick() }
+    }
+
+    /** One-of-many choice as a row of chips; the selected one is filled with the card colour. */
+    private fun choice(items: List<Pair<String, String>>, selected: String, color: Int, disabled: Set<String> = emptySet(), onPick: (String) -> Unit) =
+        ChipGroup(this).apply {
+            isSingleSelection = true; isSelectionRequired = true
+            chipSpacingVertical = dp(2); chipSpacingHorizontal = dp(5)
+            val states = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
+            items.forEach { (id, label) ->
+                addView(Chip(context).apply {
+                    text = label; textSize = 13f; isCheckable = true; isCheckedIconVisible = false
+                    chipStartPadding = dp(2).toFloat(); chipEndPadding = dp(2).toFloat()
+                    textStartPadding = dp(7).toFloat(); textEndPadding = dp(7).toFloat()
+                    chipMinHeight = dp(32).toFloat(); ensureAccessibleTouchTarget(dp(40))
+                    chipBackgroundColor = ColorStateList(states, intArrayOf(color, Color.TRANSPARENT))
+                    setTextColor(ColorStateList(states, intArrayOf(if (pal.dark) pal.bg else Color.WHITE, pal.text)))
+                    chipStrokeColor = ColorStateList.valueOf(color); chipStrokeWidth = dp(1).toFloat()
+                    isChecked = id == selected; isEnabled = id !in disabled; if (!isEnabled) alpha = .45f
+                    setOnCheckedChangeListener { _, on -> if (on) onPick(id) }
+                })
+            }
+        }
+
+    private fun sw(s: String, v: Boolean, on: (Boolean) -> Unit) = com.google.android.material.materialswitch.MaterialSwitch(this).apply {
+        text = s; textSize = 14f; isChecked = v; setTextColor(pal.text)
+        minHeight = dp(44); minimumHeight = dp(44); setPadding(0, 0, 0, 0); setOnCheckedChangeListener { _, c -> on(c) }
+    }
+
+    /** "Claude  [key……]  ●" — dot shows whether a key is set and whether this service is in use. */
+    private fun LinearLayout.keyRow(id: String, name: String, value: String, save: (String) -> Unit) {
+        val e = EditText(context).apply {
+            setText(value); isSingleLine = true; textSize = 13f; hint = "API key"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setPadding(dp(10), dp(6), dp(10), dp(6)); background = rounded(pal.bg, 10, pal.line)
+            setOnFocusChangeListener { _, f -> if (!f) { save(text.toString()); refreshKeys() } }
+        }
+        val dot = TextView(context).apply { textSize = 12f; setPadding(dp(8), 0, 0, 0); minWidth = dp(64) }
+        keyDots[id] = dot
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(3), 0, dp(3))
+            addView(TextView(context).apply { text = name; textSize = 13f; setTextColor(pal.text); minWidth = dp(70) })
+            addView(e, LinearLayout.LayoutParams(0, dp(36), 1f)); addView(dot)
+        })
+        saves += { save(e.text.toString()) }
+    }
+
+    private fun refreshKeys() {
+        val keys = mapOf("claude" to prefs.claudeKey, "openai" to prefs.openaiKey, "deepseek" to prefs.deepseekKey)
+        keyDots.forEach { (id, tv) ->
+            val has = keys[id].orEmpty().isNotBlank()
+            val used = has && (prefs.mode == "auto" || prefs.mode == id)
+            tv.text = when { used -> "● in use"; has -> "● saved"; else -> "○ no key" }
+            tv.setTextColor(when { used -> cOk; has -> pal.muted; else -> pal.muted })
+        }
+    }
+
+    private fun showModeHint() {
+        modeHint.text = when (prefs.mode) {
+            "offline" -> "Online AI is off: everything is translated on the phone."
+            "auto" -> "Auto: in mainland China → DeepSeek. Elsewhere → Claude, then OpenAI, then DeepSeek. Only services with a key are used."
+            else -> "Always ${niceName(prefs.mode)} (needs its key below). Offline is used when it can't be reached."
+        }
+    }
+
+    private fun LinearLayout.field(name: String, value: String, save: (String) -> Unit) {
+        val e = EditText(context).apply {
+            setText(value); isSingleLine = true; textSize = 13f
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            setPadding(dp(10), dp(6), dp(10), dp(6)); background = rounded(pal.bg, 10, pal.line)
+        }
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(3), 0, dp(3))
+            addView(TextView(context).apply { text = name; textSize = 13f; setTextColor(pal.text); minWidth = dp(110) })
+            addView(e, LinearLayout.LayoutParams(0, dp(36), 1f))
+        })
+        saves += { save(e.text.toString()) }
+    }
+
+    /** A small round sample of a palette (page colour with its accent dot), ringed when selected. */
     private fun swatch(p: Palette, selected: Boolean, onClick: () -> Unit) = vbox {
-        gravity = android.view.Gravity.CENTER_HORIZONTAL
-        val cur = Themes.current(context)
-        addView(android.widget.FrameLayout(context).apply {
-            background = android.graphics.drawable.GradientDrawable().apply {
-                shape = android.graphics.drawable.GradientDrawable.OVAL; setColor(p.bg)
-                setStroke(dp(if (selected) 3 else 1), if (selected) cur.accent else cur.line)
+        gravity = Gravity.CENTER_HORIZONTAL; setPadding(0, dp(4), 0, 0)
+        addView(FrameLayout(context).apply {
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL; setColor(p.bg)
+                setStroke(dp(if (selected) 3 else 1), if (selected) pal.accent else pal.line)
             }
             addView(View(context).apply {
-                background = android.graphics.drawable.GradientDrawable().apply {
-                    shape = android.graphics.drawable.GradientDrawable.OVAL; setColor(p.accent)
-                }
-            }, android.widget.FrameLayout.LayoutParams(dp(20), dp(20), android.view.Gravity.CENTER))
-        }, android.widget.LinearLayout.LayoutParams(dp(48), dp(48)))
-        addView(label(p.name, 12f, bold = selected).apply {
-            gravity = android.view.Gravity.CENTER; setPadding(0, dp(4), 0, 0); maxLines = 1
+                background = GradientDrawable().apply { shape = GradientDrawable.OVAL; setColor(p.accent) }
+            }, FrameLayout.LayoutParams(dp(14), dp(14), Gravity.CENTER))
+        }, LinearLayout.LayoutParams(dp(34), dp(34)))
+        addView(TextView(context).apply {
+            text = p.name.substringBefore(' '); textSize = 10f; maxLines = 1; gravity = Gravity.CENTER
+            setTextColor(if (selected) pal.text else pal.muted); if (selected) setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, dp(2), 0, 0)
         })
         setOnClickListener { onClick() }
     }
 
     private fun downloadModels() {
-        modelsTv.text = "⏳ Downloading (~60 MB)…"
+        modelsTv.text = "⏳ Downloading (~60 MB)…"; modelsTv.setTextColor(pal.text)
         lifecycleScope.launch {
             runCatching { Offline.downloadModels() }
-                .onSuccess { modelsTv.text = "✅ Offline EN/中 packs ready" }
-                .onFailure { modelsTv.text = "✗ Download failed: ${it.message} (Google servers are blocked in China)" }
+                .onSuccess { modelsTv.text = "● English/中文 packs ready"; modelsTv.setTextColor(cOk) }
+                .onFailure { modelsTv.text = "✗ Download failed: ${it.message} (Google is blocked in China: use a VPN)"; modelsTv.setTextColor(cWarn) }
         }
     }
 

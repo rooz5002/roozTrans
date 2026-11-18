@@ -14,6 +14,8 @@ class Prefs(ctx: Context) {
     var openaiModel by str("openai_model", "gpt-5-mini")
     var deepseekModel by str("deepseek_model", "deepseek-chat")
 
+    /** offline method: fast (ML Kit, on phone) | quality (on-phone AI model, next version) */
+    var offlineEngine by str("offline_engine", "fast")
     /** auto | offline | claude | openai | deepseek */
     var mode by str("mode", "auto")
     var showBubble by bool("show_bubble", true)
