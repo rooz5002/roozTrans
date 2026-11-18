@@ -1,6 +1,6 @@
 # roozTrans — Privacy Policy
 
-_Last updated: 11 November 2026_
+_Last updated: 18 November 2026_
 
 roozTrans is built to keep your data on your phone. **The developer does not collect, store, sell or share any personal data.** There are no ads, no analytics, no tracking and no accounts.
 
@@ -37,9 +37,10 @@ It does **not** read screen content in the background, does not collect personal
 - **Internet / network state:** online translation, country lookup, and update checks (direct version only).
 - **No camera, storage, contacts or location permission.** The camera button opens your phone's own camera app, and the gallery button uses Android's photo picker, so roozTrans sees only the photo you choose.
 - **Install packages** (direct-download version only): install its own updates.
+- **Ignore battery optimisations** (direct-download version only): lets you exempt roozTrans from the battery saver in one tap, so the phone does not switch the screen translator off while it sleeps. The Google Play version opens the battery settings instead.
 
 ## Children
 roozTrans is not directed at children under 13 and does not knowingly collect data from anyone.
 
 ## Changes and contact
-If this policy changes, the "Last updated" date will change. Questions: open an issue at <https://github.com/rooz5002/roozTrans/issues>.
+If this policy changes, the "Last updated" date will change. If you write to us, we receive only what you put in the message (your name, email address and text), use it only to reply, and delete it when it is no longer needed. Questions or problems: use the contact form at <https://rooz.com/?contact=roozTrans> (choose the topic "roozTrans"). We usually reply within a couple of days.

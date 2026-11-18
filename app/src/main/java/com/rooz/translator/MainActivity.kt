@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var feed: LinearLayout
     private lateinit var feedScroll: ScrollView
     private lateinit var hint: View
+    private lateinit var fixBar: View
     private var job: Job? = null
     private var photoUri: Uri? = null
 
@@ -76,6 +77,21 @@ class MainActivity : AppCompatActivity() {
                 startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
             })
         })
+
+        // ---- warning when the phone has stopped the screen translator (battery savers) ----
+        fixBar = hbox {
+            setPadding(dp(14), dp(10), dp(6), dp(10)); background = rounded(pal.surface, 14, pal.accent)
+            visibility = View.GONE
+            weighted(TextView(context).apply {
+                text = "⚠ Your phone stopped the screen translator. Tap to fix."; textSize = 14f; setTextColor(pal.text)
+            })
+            addView(TextView(context).apply {
+                text = "✕"; textSize = 16f; setTextColor(pal.muted); setPadding(dp(12), dp(4), dp(10), dp(4))
+                setOnClickListener { prefs.a11yWasOn = false; fixBar.visibility = View.GONE }   // "I turned it off myself"
+            })
+            setOnClickListener { KeepAlive.showRepair(this@MainActivity, KeepAlive.state(this@MainActivity)) }
+        }
+        root.addView(fixBar, LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(12), 0, dp(12), dp(4)) })
 
         // ---- the big empty page (fills with results) ----
         feed = vbox().apply { setPadding(dp(16), dp(8), dp(16), dp(16)) }
@@ -153,8 +169,15 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         if (Prefs(this).theme != themeId) { recreate(); return }   // colour changed in Settings
         TranslatorService.instance?.refreshBubble()
+        // give Android a moment to (re)bind the service after the app process starts, then check it really runs
+        fixBar.removeCallbacks(checkService); fixBar.postDelayed(checkService, 1500)
         lifecycleScope.launch { runCatching { engine.online.route(force = false) } }   // warm the IP check
         lifecycleScope.launch { Updater.autoCheck(this@MainActivity) }
+    }
+
+    private val checkService = Runnable {
+        val broken = prefs.a11yConsent && prefs.a11yWasOn && KeepAlive.state(this) != KeepAlive.State.RUNNING
+        fixBar.visibility = if (broken) View.VISIBLE else View.GONE
     }
 
     private fun handleIntent(i: Intent?) {
@@ -191,13 +214,21 @@ class MainActivity : AppCompatActivity() {
         feed.addView(TextView(this).apply {
             this.text = text; textSize = 15f; setTextColor(pal.text); setTextIsSelectable(true)
             background = rounded(pal.surface, 18); setPadding(dp(14), dp(10), dp(14), dp(10))
-        }, LinearLayout.LayoutParams(-2, -2).apply { gravity = Gravity.END; setMargins(dp(48), dp(14), 0, dp(8)) })
+        }, LinearLayout.LayoutParams(-2, -2).apply { gravity = Gravity.END; setMargins(dp(48), dp(14), 0, if (dir == Dir.ZH_EN) dp(2) else dp(8)) })
+        // Chinese in → its pinyin under your text
+        if (dir == Dir.ZH_EN && prefs.showPinyin) Pinyin.of(text)?.let { py ->
+            feed.addView(pinyinView(py).apply { gravity = Gravity.END },
+                LinearLayout.LayoutParams(-2, -2).apply { gravity = Gravity.END; setMargins(dp(48), 0, dp(4), dp(8)) })
+        }
         // translation: plain text on the page
         val out = TextView(this).apply {
             this.text = "…"; textSize = 19f; setTextColor(pal.text); setTextIsSelectable(true)
             setLineSpacing(0f, 1.15f); setPadding(dp(2), 0, dp(2), 0)
         }
         feed.addView(out, LinearLayout.LayoutParams(-1, -2))
+        // Chinese out → its pinyin under the translation
+        val outPy = pinyinView("").apply { visibility = View.GONE }
+        feed.addView(outPy, LinearLayout.LayoutParams(-1, -2))
         val meta = TextView(this).apply { textSize = 12f; setTextColor(pal.muted); this.text = dir.label }
         val copy = TextView(this).apply {
             this.text = "Copy"; textSize = 12f; setTextColor(pal.accent); setPadding(dp(12), dp(6), dp(2), dp(6))
@@ -209,9 +240,18 @@ class MainActivity : AppCompatActivity() {
         job?.cancel()
         job = lifecycleScope.launch {
             engine.translate(listOf(text), dir, offlineOnly = false,
-                onResult = { t, who -> out.text = t.first(); meta.text = "${dir.label} · $who"; scrollDown() },
+                onResult = { t, who ->
+                    out.text = t.first(); meta.text = "${dir.label} · $who"
+                    val py = if (dir == Dir.EN_ZH && prefs.showPinyin) Pinyin.of(t.first()) else null
+                    outPy.text = py ?: ""; outPy.visibility = if (py != null) View.VISIBLE else View.GONE
+                    scrollDown()
+                },
                 onError = { e -> if (out.text == "…") out.text = ""; meta.text = "⚠ $e" })
         }
+    }
+
+    private fun pinyinView(s: String) = TextView(this).apply {
+        text = s; textSize = 14f; setTextColor(pal.muted); setTextIsSelectable(true); setPadding(dp(2), dp(2), dp(2), dp(2))
     }
 
     private fun scrollDown() = feedScroll.post { feedScroll.fullScroll(View.FOCUS_DOWN) }

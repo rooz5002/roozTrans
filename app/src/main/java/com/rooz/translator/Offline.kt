@@ -15,12 +15,23 @@ import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import kotlinx.coroutines.tasks.await
 
 /** One piece of text found on a screen/photo, plus its translation once we have it. */
-data class TextItem(val rect: Rect, val original: String, val lineHeight: Int, val lineCount: Int = 1, var translated: String? = null)
+data class TextItem(val rect: Rect, val original: String, val lineHeight: Int, val lineCount: Int = 1, var translated: String? = null, var pinyin: String? = null)
 
 /** Everything that runs on the phone with no internet. */
 object Offline {
     // Chinese recognizer also reads Latin script. Model is bundled in the APK (no download).
-    private val recognizer by lazy { TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build()) }
+    private var rec: com.google.mlkit.vision.text.TextRecognizer? = null
+    private val recognizer get() = synchronized(this) { rec ?: TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build()).also { rec = it } }
+
+    /**
+     * Free the OCR and translation models (tens of MB) while the screen is off. A smaller process is far less
+     * likely to be killed by battery savers, and a killed process is what turns the screen translator off.
+     * They load again on the next use (about a second).
+     */
+    fun release() {
+        synchronized(this) { rec?.let { runCatching { it.close() } }; rec = null }
+        synchronized(translators) { translators.values.forEach { runCatching { it.close() } }; translators.clear() }
+    }
 
     suspend fun ocr(bmp: Bitmap): List<TextItem> {
         val result = recognizer.process(InputImage.fromBitmap(bmp, 0)).await()

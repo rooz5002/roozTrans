@@ -50,6 +50,9 @@ class WelcomeActivity : AppCompatActivity() {
                     "\"Translate screen\" Quick Settings tile) to translate what's on screen.", 14f).apply { alpha = .8f })
                 bubbleTv = label("", 14f).apply { setPadding(0, dp(8), 0, 0) }; addView(bubbleTv)
                 addView(button("Turn on screen translator") { openAccessibilitySetup() })
+                addView(label("Some phones (Samsung, Huawei, Honor …) switch it off again after a long sleep to save battery. " +
+                    "Allow roozTrans to keep running:", 14f).apply { alpha = .8f; setPadding(0, dp(10), 0, 0) })
+                addView(button("Keep it on (battery settings)", outlined = true) { KeepAlive.showGuide(this@WelcomeActivity) })
             })
 
             addView(card {
@@ -95,7 +98,8 @@ class WelcomeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        bubbleTv.text = if (TranslatorService.instance != null) "✅ Screen translator is on" else "⭕ Not on yet"
+        bubbleTv.text = (if (TranslatorService.instance != null) "✅ Screen translator is on" else "⭕ Not on yet") +
+            "\n" + KeepAlive.statusLine(this)
         installTv?.text = if (packageManager.canRequestPackageInstalls()) "✅ Updates can install" else "⭕ Not allowed yet (Android will also ask on the first update)"
         lifecycleScope.launch {
             packsTv.text = if (runCatching { Offline.modelsReady() }.getOrDefault(false)) "✅ Offline English/中文 ready" else "⭕ Not downloaded yet"

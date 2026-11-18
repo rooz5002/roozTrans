@@ -19,5 +19,5 @@
 ## Store settings
 - **App category:** Travel & Local (alternative: Tools)
 - **Tags:** Translator, Travel, Language
-- **Contact email:** required and shown publicly. Use a dedicated address (e.g. support@rooz.com) rather than a personal one
+- **Contact email:** required and shown publicly: support@rooz.com. Website: https://rooz.com/?contact=roozTrans (opens the contact form on the roozTrans topic)
 - **Website:** https://rooz.com/rooztrans/ (optional)

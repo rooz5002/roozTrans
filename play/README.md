@@ -17,7 +17,7 @@ play/
 1. **Register** a developer account at <https://play.google.com/console/signup> (personal, US$25, ID verification). Read and accept the agreements listed in `GOOGLE_PLAY_REQUIREMENTS.md`.
 2. **Before submitting:**
    - Upload the privacy and terms pages: `server/publish-legal.sh` (from the repo root). Check that https://rooz.com/rooztrans/privacy.html opens.
-   - Pick a public contact email. Put it in `TERMS.md`, `PRIVACY.md` and the Console, then re-run `server/publish-legal.sh`.
+   - Contact: Console email = support@rooz.com, website = https://rooz.com/?contact=roozTrans (already in `TERMS.md` / `PRIVACY.md`; re-run `server/publish-legal.sh` after editing them).
    - Back up `~/keys/` (upload key) somewhere off this laptop.
 3. **Create app** in the Console: name `roozTrans: English ⇄ Chinese`, default language English (UK), App, Free. Accept the declarations.
 4. **Store listing:** paste from `listing/en-GB/` and upload `graphics/icon-512.png`, `graphics/feature-1024x500.png` and `graphics/screenshots/*`. Category: Travel & Local. Add the contact email.

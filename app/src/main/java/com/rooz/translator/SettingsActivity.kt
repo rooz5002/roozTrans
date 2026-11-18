@@ -19,6 +19,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var prefs: Prefs
     private val saves = ArrayList<() -> Unit>()
     private lateinit var svcTv: TextView
+    private lateinit var batTv: TextView
     private lateinit var modelsTv: TextView
     private lateinit var netTv: TextView
     private val modes = listOf("auto" to "Auto (by IP country)", "offline" to "Offline only",
@@ -48,7 +49,14 @@ class SettingsActivity : AppCompatActivity() {
                 addView(label("Screen translator", 16f, bold = true))
                 addView(label("Tap the floating bubble, double-press Volume Down, or use the \"Translate screen\" Quick Settings tile.", 13f).apply { alpha = .7f })
                 svcTv = label(""); addView(svcTv)
-                addView(button("Turn on screen translator", outlined = true) { openAccessibilitySetup() })
+                addView(button("Turn on screen translator", outlined = true) {
+                    val st = KeepAlive.state(this@SettingsActivity)
+                    if (st == KeepAlive.State.STUCK) KeepAlive.showRepair(this@SettingsActivity, st) else openAccessibilitySetup()
+                })
+                batTv = label(""); addView(batTv)
+                addView(button("Keep it on (battery settings)", outlined = true) { KeepAlive.showGuide(this@SettingsActivity) })
+                addView(switch("Show pinyin (拼音) with Chinese", prefs.showPinyin) { prefs.showPinyin = it })
+                addView(label("Screen: first tap shows pinyin, second the English, third closes. Pinch or double-tap to zoom.", 13f).apply { alpha = .7f })
                 modelsTv = label(""); addView(modelsTv)
                 addView(button("Download offline language packs", outlined = true) { downloadModels() })
                 netTv = label(""); addView(netTv)
@@ -115,6 +123,7 @@ class SettingsActivity : AppCompatActivity() {
             addView(button("Setup guide", outlined = true) { startActivity(android.content.Intent(this@SettingsActivity, WelcomeActivity::class.java)) })
             addView(button("Terms of use & disclaimer", outlined = true) { openUrl(Links.TERMS) })
             addView(button("Privacy policy", outlined = true) { openUrl(Links.PRIVACY) })
+            addView(button("Contact us / report a problem", outlined = true) { openUrl(Links.CONTACT) })
             addView(button("Source code", outlined = true) { openUrl(Links.SOURCE) })
         })
         val scroll = ScrollView(this).apply { addView(root) }
@@ -122,7 +131,11 @@ class SettingsActivity : AppCompatActivity() {
             val b = ins.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()); v.setPadding(b.left, b.top, b.right, b.bottom); ins
         }
         setContentView(scroll)
-        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_ENABLE_A11Y, false)) openAccessibilitySetup()
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_ENABLE_A11Y, false)) {
+            val st = KeepAlive.state(this)   // from the Quick Settings tile: stopped by the phone, or never turned on?
+            if (st == KeepAlive.State.STUCK || (st == KeepAlive.State.OFF && prefs.a11yWasOn)) KeepAlive.showRepair(this, st)
+            else openAccessibilitySetup()
+        }
     }
 
     private fun android.widget.LinearLayout.field(name: String, value: String, secret: Boolean = false, save: (String) -> Unit) {
@@ -141,7 +154,12 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        svcTv.text = if (TranslatorService.instance != null) "✅ Screen translator is ON" else "⭕ Screen translator is OFF"
+        svcTv.text = when (KeepAlive.state(this)) {
+            KeepAlive.State.RUNNING -> "✅ Screen translator is ON"
+            KeepAlive.State.STUCK -> "⚠ Screen translator is switched on but Android stopped it. Tap below to fix."
+            KeepAlive.State.OFF -> "⭕ Screen translator is OFF"
+        }
+        batTv.text = KeepAlive.statusLine(this)
         lifecycleScope.launch {
             modelsTv.text = if (runCatching { Offline.modelsReady() }.getOrDefault(false)) "✅ Offline EN/中 packs ready"
                             else "⚠ Offline packs missing — download before going to China"

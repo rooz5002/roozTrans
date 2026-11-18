@@ -1,6 +1,6 @@
 # roozTrans — Terms of Use and Disclaimer
 
-_Last updated: 11 November 2026_
+_Last updated: 18 November 2026_
 
 By installing or using roozTrans ("the app") you agree to these terms. If you do not agree, do not use the app.
 
@@ -36,4 +36,4 @@ Versions installed from Google Play are updated by Google Play. Versions install
 The source code is available under the [MIT License](LICENSE). The license's warranty disclaimer and limitation of liability also apply.
 
 ## 10. Changes and contact
-These terms may be updated; the "Last updated" date will change. Questions: open an issue at <https://github.com/rooz5002/roozTrans/issues>.
+These terms may be updated; the "Last updated" date will change. Questions or problems: use the contact form at <https://rooz.com/?contact=roozTrans> (choose the topic "roozTrans"). We usually reply within a couple of days.

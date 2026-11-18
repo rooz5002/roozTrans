@@ -20,6 +20,10 @@ class Prefs(ctx: Context) {
     var volumeTrigger by bool("volume_trigger", true)
     /** user agreed to the accessibility-service disclosure */
     var a11yConsent by bool("a11y_consent", false)
+    /** the service has connected at least once (so "not running" now means the phone stopped it) */
+    var a11yWasOn by bool("a11y_was_on", false)
+    /** show pinyin next to Chinese (text screen) and as the first step of the screen overlay */
+    var showPinyin by bool("show_pinyin", true)
     /** first-run welcome / setup guide finished */
     var onboarded by bool("onboarded", false)
     /** After the instant offline result, also fetch a better online one. */

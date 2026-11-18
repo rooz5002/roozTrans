@@ -20,18 +20,20 @@ class OverlayRenderer(private val density: Float) {
     private val tp = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(20, 20, 20) }
 
     /** Returns the drawn boxes (for hit-testing), in canvas coordinates. */
-    fun draw(c: Canvas, items: List<TextItem>, dx: Float = 0f, dy: Float = 0f, scale: Float = 1f, showOriginal: Boolean = false): List<Pair<RectF, TextItem>> {
+    /** [textOf] picks what to paint for each piece (translation, original or pinyin); null = skip it. */
+    fun draw(c: Canvas, items: List<TextItem>, dx: Float = 0f, dy: Float = 0f, scale: Float = 1f,
+             textOf: (TextItem) -> String? = { it.translated }): List<Pair<RectF, TextItem>> {
         val hits = ArrayList<Pair<RectF, TextItem>>()
         val minPx = 7f * density
         val pad = 2f * density
         val rr = 4f * density
         for (it in items) {
-            val text = (if (showOriginal) it.original else it.translated) ?: continue
+            val text = textOf(it) ?: continue
             val r = RectF(it.rect.left * scale + dx - pad, it.rect.top * scale + dy - pad,
                           it.rect.right * scale + dx + pad, it.rect.bottom * scale + dy + pad)
             val startSize = (it.lineHeight * scale * 0.8f).coerceIn(minPx, 40f * density)
 
-            if (it.lineCount <= 1) {
+            if (it.lineCount <= 1 && '\n' !in text) {
                 // Buttons, labels, menu items: keep ONE line, shrink to fit, and if still too long
                 // widen the box sideways around its centre instead of wrapping onto a line below.
                 tp.textSize = startSize

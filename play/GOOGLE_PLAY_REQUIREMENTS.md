@@ -15,7 +15,7 @@ _ Google changes these often. Re-check the linked official pages before each sub
 | Requirement | Status |
 |---|---|
 | **Identity verification** (government ID; personal accounts show limited details publicly) | ⏳ You're doing this now |
-| **Public developer contact email** | ❗ Needs a dedicated address (e.g. support@rooz.com). It also replaces the GitHub-issues contact in the terms and privacy pages |
+| **Public developer contact email** | ✅ support@rooz.com in the Console (Play requires an email). Terms and privacy pages point to the web form https://rooz.com/?contact=roozTrans |
 | **Testing requirement for new personal accounts:** a closed test with **≥ 12 testers opted in for 14 consecutive days** before you can apply for production ([official page](https://support.google.com/googleplay/android-developer/answer/14151465)) | ⏳ After the first upload. See README step 6. Organisation accounts (registered with a D-U-N-S number) are exempt |
 | **Android developer verification** ([blog](https://developer.android.com/blog/posts/android-developer-verification-rolling-out-to-all-developers-on-play-console-and-android-developer-console)): apps on certified devices must come from verified developers. Enforcement began 30 Sep 2026 in Brazil, Indonesia, Singapore and Thailand, and goes global in 2027, **including sideloaded APKs** | ⚠️ Play builds are covered by your Play registration. The **direct APK** you share yourself must also be registered (package + signing key) before global enforcement. It's currently signed with a debug key, so plan to move it to a proper release key (one reinstall on existing phones) |
 

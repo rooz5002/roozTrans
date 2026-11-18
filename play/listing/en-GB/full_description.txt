@@ -4,6 +4,7 @@ TRANSLATE ANYTHING
 • Text: type or paste, and get the translation instantly
 • Photos: take a picture or choose one, and the translation is drawn over the original text
 • Your screen: tap the floating bubble, use the "Translate screen" Quick Settings tile, or double-press Volume Down to translate whatever is on screen in any app
+• Pinyin: see the pinyin (with tones) for Chinese, whichever way you translate. On screen, tap the bubble once for pinyin, again for English, and once more to close. Pinch to zoom into dense text
 • Select text in any app and choose "roozTrans" from the menu, or share text and images to roozTrans
 
 WORKS OFFLINE

@@ -24,7 +24,9 @@ class ImageActivity : AppCompatActivity() {
     private lateinit var list: TextView
     private var source: Bitmap? = null
     private var items: List<TextItem> = emptyList()
-    private var showOriginal = false
+    private var dir = Dir.ZH_EN
+    /** 0 = translation, 1 = pinyin (Chinese photos only), 2 = original */
+    private var view = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Themes.apply(this)
@@ -35,7 +37,10 @@ class ImageActivity : AppCompatActivity() {
         val root = vbox(12) {
             addView(hbox {
                 weighted(status)
-                addView(button("原 / EN", outlined = true) { showOriginal = !showOriginal; render() })
+                addView(button("原 / 拼音 / EN", outlined = true) {
+                    view = when (view) { 0 -> if (dir == Dir.ZH_EN && Prefs(this@ImageActivity).showPinyin) 1 else 2; 1 -> 2; else -> 0 }
+                    render()
+                })
             })
             addView(img)
             addView(list)
@@ -52,12 +57,16 @@ class ImageActivity : AppCompatActivity() {
         val bmp = runCatching { withContext(Dispatchers.IO) { decode(uri) } }.getOrElse { status.text = "Can't open image: ${it.message}"; return@launch }
         source = bmp; img.setImageBitmap(bmp)
         val found = runCatching { Offline.ocr(bmp) }.getOrElse { status.text = "Text reading failed: ${it.message}"; return@launch }
-        val dir = Lang.dominant(found.map { it.original })
+        dir = Lang.dominant(found.map { it.original })
         items = found.filter { Lang.needs(it.original, dir) }
+        if (dir == Dir.ZH_EN) withContext(Dispatchers.Default) { items.forEach { it.pinyin = Pinyin.of(it.original) } }
         if (items.isEmpty()) { status.text = "No ${dir.srcName} text found"; return@launch }
         status.text = "${dir.label} · translating ${items.size} pieces…"
         Engine(this@ImageActivity).translate(items.map { it.original }, dir,
-            onResult = { t, who -> items.forEachIndexed { i, it -> it.translated = t[i] }; status.text = "${dir.label} · $who"; render() },
+            onResult = { t, who ->
+                items.forEachIndexed { i, it -> it.translated = t[i]; if (dir == Dir.EN_ZH) it.pinyin = Pinyin.of(t[i]) }
+                status.text = "${dir.label} · $who"; render()
+            },
             onError = { status.text = "⚠ $it" })
     }
 
@@ -74,8 +83,14 @@ class ImageActivity : AppCompatActivity() {
         // The photo is shown at screen width, so 1 dp on screen = (photo px / screen px) * density photo pixels
         val shownWidth = resources.displayMetrics.widthPixels - dp(24)
         val density = resources.displayMetrics.density * src.width / shownWidth.toFloat()
-        OverlayRenderer(density).draw(Canvas(out), items, showOriginal = showOriginal)
+        val py = Prefs(this).showPinyin
+        OverlayRenderer(density).draw(Canvas(out), items) {
+            when (view) { 1 -> it.pinyin ?: it.original; 2 -> it.original; else -> it.translated }
+        }
         img.setImageBitmap(out)
-        list.text = items.joinToString("\n\n") { "${it.translated ?: "…"}\n   ${it.original}" }
+        // readable list: translation, pinyin of whichever side is Chinese, original
+        list.text = items.joinToString("\n\n") { i ->
+            listOfNotNull(i.translated ?: "…", i.pinyin?.takeIf { py }?.let { "   $it" }, "   ${i.original}").joinToString("\n")
+        }
     }
 }

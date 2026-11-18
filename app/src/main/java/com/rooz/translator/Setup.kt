@@ -46,4 +46,6 @@ object Links {
     // hosted on our own site so they keep working even if the repo goes private (Play needs a public privacy URL)
     const val TERMS = "https://rooz.com/rooztrans/terms.html"
     const val PRIVACY = "https://rooz.com/rooztrans/privacy.html"
+    /** web contact form with the roozTrans topic preselected (mails support@rooz.com, no address published) */
+    const val CONTACT = "https://rooz.com/?contact=roozTrans"
 }

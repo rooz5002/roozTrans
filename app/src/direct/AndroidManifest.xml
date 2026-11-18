@@ -3,6 +3,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+    <!-- one-tap "Unrestricted battery" so battery savers don't stop the screen translator (Play build opens the settings list instead) -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <application>
         <receiver android:name=".UpdateReceiver" android:exported="false" />
         <!-- sent by the system DownloadManager (other uid) when the update APK finishes; APK is SHA-256 checked anyway -->
