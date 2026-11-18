@@ -37,7 +37,7 @@ class ImageActivity : AppCompatActivity() {
         val root = vbox(12) {
             addView(hbox {
                 weighted(status)
-                addView(button("原 / 拼音 / EN", outlined = true) {
+                addView(button(if (Prefs(this@ImageActivity).showPinyin) "原 / 拼音 / EN" else "原 / EN", outlined = true) {
                     view = when (view) { 0 -> if (dir == Dir.ZH_EN && Prefs(this@ImageActivity).showPinyin) 1 else 2; 1 -> 2; else -> 0 }
                     render()
                 })

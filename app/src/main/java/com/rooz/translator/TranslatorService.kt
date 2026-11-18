@@ -265,7 +265,7 @@ class TranslatorService : AccessibilityService() {
                 background = GradientDrawable().apply { setColor(Color.argb(230, 30, 30, 30)); cornerRadius = 22 * dp }
                 val p = (10 * dp).toInt(); setPadding(p * 2, p, p, p)
                 addView(statusTv, LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
-                val names = if (dir == Dir.ZH_EN) listOf(Show.ORIGINAL to "原", Show.PINYIN to "拼音", Show.TRANSLATION to "EN")
+                val names = if (dir == Dir.ZH_EN) listOfNotNull(Show.ORIGINAL to "原", (Show.PINYIN to "拼音").takeIf { prefs.showPinyin }, Show.TRANSLATION to "EN")
                             else listOf(Show.ORIGINAL to "EN", Show.TRANSLATION to "中文")
                 names.forEach { (m, label) -> btn(label) { show(m) }.also { chips[m] = it; addView(it) } }
                 addView(btn("Copy") { copy(items.mapNotNull { textFor(it) }.joinToString("\n")) })
