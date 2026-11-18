@@ -11,3 +11,5 @@ keystore.properties
 *.jks
 *.keystore
 *.aab
+research/mt-test/models/
+research/mt-test/.venv/
