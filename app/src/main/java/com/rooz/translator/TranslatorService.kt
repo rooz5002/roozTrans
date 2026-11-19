@@ -99,6 +99,9 @@ class TranslatorService : AccessibilityService() {
         runCatching { addBubble() }
     }
 
+    /** "Turn off" button in the app: Android lets a service switch itself off (no permission needed). */
+    fun turnOff() = safe { prefs.a11yWasOn = false; KeepAliveService.stop(this); disableSelf() }
+
     /** Only called when the service is switched off in Settings (a killed process gets no callback). */
     override fun onUnbind(intent: Intent?): Boolean {
         safe { prefs.a11yWasOn = false; KeepAliveService.stop(this) }

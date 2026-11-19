@@ -49,6 +49,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var feedScroll: ScrollView
     private lateinit var hint: View
     private lateinit var fixBar: View
+    private lateinit var svcTv: TextView
+    private lateinit var svcBtn: com.google.android.material.button.MaterialButton
     private var job: Job? = null
     private var photoUri: Uri? = null
 
@@ -78,18 +80,20 @@ class MainActivity : AppCompatActivity() {
             })
         })
 
-        // ---- warning when the phone has stopped the screen translator (battery savers) ----
+        // ---- screen translator status: on / off / stopped by the phone, with a one-tap On/Off button ----
         fixBar = hbox {
-            setPadding(dp(14), dp(10), dp(6), dp(10)); background = rounded(pal.surface, 14, pal.accent)
-            visibility = View.GONE
-            weighted(TextView(context).apply {
-                text = "⚠ Your phone stopped the screen translator. Tap to fix."; textSize = 14f; setTextColor(pal.text)
-            })
-            addView(TextView(context).apply {
-                text = "✕"; textSize = 16f; setTextColor(pal.muted); setPadding(dp(12), dp(4), dp(10), dp(4))
-                setOnClickListener { prefs.a11yWasOn = false; fixBar.visibility = View.GONE }   // "I turned it off myself"
-            })
-            setOnClickListener { KeepAlive.showRepair(this@MainActivity, KeepAlive.state(this@MainActivity)) }
+            setPadding(dp(14), dp(4), dp(6), dp(4)); background = rounded(pal.surface, 14, pal.accent)
+            gravity = Gravity.CENTER_VERTICAL
+            svcTv = TextView(context).apply { textSize = 13.5f; setTextColor(pal.text) }
+            weighted(svcTv)
+            svcBtn = com.google.android.material.button.MaterialButton(context,
+                null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                textSize = 13f; minHeight = dp(36); minimumHeight = dp(36); insetTop = 0; insetBottom = 0
+                setPadding(dp(14), 0, dp(14), 0); setTextColor(pal.accent)
+                strokeColor = android.content.res.ColorStateList.valueOf(pal.accent)
+                setOnClickListener { toggleService() }
+            }
+            addView(svcBtn)
         }
         root.addView(fixBar, LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(12), 0, dp(12), dp(4)) })
 
@@ -170,7 +174,7 @@ class MainActivity : AppCompatActivity() {
         if (Prefs(this).theme != themeId) { recreate(); return }   // colour changed in Settings
         TranslatorService.instance?.refreshBubble()
         // give Android a moment to (re)bind the service after the app process starts, then check it really runs
-        fixBar.removeCallbacks(checkService); fixBar.postDelayed(checkService, 1500)
+        showService(); fixBar.removeCallbacks(checkService); fixBar.postDelayed(checkService, 1500)
         lifecycleScope.launch { runCatching { engine.online.route(force = false) } }   // warm the IP check
         lifecycleScope.launch { Updater.autoCheck(this@MainActivity) }
     }
@@ -185,7 +189,7 @@ class MainActivity : AppCompatActivity() {
             fixBar.postDelayed(checkService, 2500); return@Runnable
         }
         repaired = false
-        fixBar.visibility = if (broken) View.VISIBLE else View.GONE
+        showService(st)
         if (st == KeepAlive.State.RUNNING) {
             KeepAliveService.start(this)   // app in front: always allowed (e.g. after it was refused in the background)
             if (prefs.keepAlive && android.os.Build.VERSION.SDK_INT >= 33 && !prefs.notifAsked &&
@@ -194,6 +198,28 @@ class MainActivity : AppCompatActivity() {
                 requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 7)
             }
         }
+    }
+
+    private fun showService(st: KeepAlive.State = KeepAlive.state(this)) {
+        when {
+            st == KeepAlive.State.RUNNING -> { svcTv.text = "● Screen translator on"; svcBtn.text = "Turn off" }
+            prefs.a11yWasOn -> { svcTv.text = "⚠ Your phone stopped the screen translator"; svcBtn.text = "Turn on" }
+            else -> { svcTv.text = "○ Screen translator off"; svcBtn.text = "Turn on" }
+        }
+    }
+
+    /** On: instantly when auto-repair is allowed, otherwise via Android's Accessibility screen. Off: always instant. */
+    private fun toggleService() {
+        val st = KeepAlive.state(this)
+        if (st == KeepAlive.State.RUNNING) {
+            TranslatorService.instance?.turnOff()
+            fixBar.postDelayed({ showService() }, 600); return
+        }
+        if (prefs.a11yConsent && KeepAlive.selfRepair(this)) {
+            svcTv.text = "⏳ Turning on…"; fixBar.postDelayed(checkService, 2500); return
+        }
+        if (st == KeepAlive.State.STUCK) KeepAlive.showRepair(this, st)
+        else startActivity(Intent(this, SettingsActivity::class.java).putExtra(SettingsActivity.EXTRA_ENABLE_A11Y, true))
     }
 
     private fun handleIntent(i: Intent?) {
