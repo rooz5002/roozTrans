@@ -60,6 +60,8 @@ class TranslatorService : AccessibilityService() {
         prefs = Prefs(this)
         prefs.a11yWasOn = true
         engine = Engine(this)
+        KeepAliveService.clearStopped(this)
+        KeepAliveService.start(this)   // keeps the process at foreground priority while the phone sleeps
         safe { refreshBubble() }
         // Samsung can drop overlay windows across screen off/on: re-check when the screen comes back.
         // Screen off: drop the big ML models so battery savers have less reason to kill us.
@@ -95,6 +97,12 @@ class TranslatorService : AccessibilityService() {
         b?.let { runCatching { wm.removeView(it) } }
         bubble = null
         runCatching { addBubble() }
+    }
+
+    /** Only called when the service is switched off in Settings (a killed process gets no callback). */
+    override fun onUnbind(intent: Intent?): Boolean {
+        safe { prefs.a11yWasOn = false; KeepAliveService.stop(this) }
+        return super.onUnbind(intent)
     }
 
     override fun onDestroy() { runCatching { unregisterReceiver(screenRx) }; instance = null; removeOverlay(); bubble?.let { runCatching { wm.removeView(it) } }; scope.cancel(); super.onDestroy() }

@@ -175,9 +175,25 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch { Updater.autoCheck(this@MainActivity) }
     }
 
-    private val checkService = Runnable {
-        val broken = prefs.a11yConsent && prefs.a11yWasOn && KeepAlive.state(this) != KeepAlive.State.RUNNING
+    private var repaired = false
+    private val checkService: Runnable = Runnable {
+        val st = KeepAlive.state(this)
+        val broken = prefs.a11yWasOn && st != KeepAlive.State.RUNNING
+        if (broken && !repaired && KeepAlive.selfRepair(this)) {   // allowed to toggle it ourselves: do it
+            repaired = true
+            Toast.makeText(this, "Restarting the screen translator…", Toast.LENGTH_SHORT).show()
+            fixBar.postDelayed(checkService, 2500); return@Runnable
+        }
+        repaired = false
         fixBar.visibility = if (broken) View.VISIBLE else View.GONE
+        if (st == KeepAlive.State.RUNNING) {
+            KeepAliveService.start(this)   // app in front: always allowed (e.g. after it was refused in the background)
+            if (prefs.keepAlive && android.os.Build.VERSION.SDK_INT >= 33 && !prefs.notifAsked &&
+                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                prefs.notifAsked = true   // lets us show "ready" and "stopped — tap to fix"; works without it too
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 7)
+            }
+        }
     }
 
     private fun handleIntent(i: Intent?) {

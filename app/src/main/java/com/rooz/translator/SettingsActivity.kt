@@ -37,6 +37,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var svcTv: TextView
     private lateinit var svcBtn: MaterialButton
     private lateinit var batTv: TextView
+    private lateinit var repairTv: TextView
     private lateinit var modelsTv: TextView
     private lateinit var netTv: TextView
     private lateinit var modeHint: TextView
@@ -136,6 +137,13 @@ class SettingsActivity : AppCompatActivity() {
             addView(row(svcTv, svcBtn))
             batTv = status()
             addView(row(batTv, small("Keep it on", cScreen) { KeepAlive.showGuide(this@SettingsActivity) }))
+            addView(sw("Keep running while asleep (quiet notification)", prefs.keepAlive) {
+                prefs.keepAlive = it
+                if (it && TranslatorService.instance != null) KeepAliveService.start(this@SettingsActivity)
+                if (!it) KeepAliveService.stop(this@SettingsActivity)
+            })
+            repairTv = status()
+            addView(row(repairTv, small("Why stopped?", cScreen) { showStops() }))
             addView(sw("Floating bubble", prefs.showBubble) { prefs.showBubble = it; TranslatorService.instance?.refreshBubble() })
             addView(sw("Double-press Volume Down", prefs.volumeTrigger) { prefs.volumeTrigger = it })
             hint("Or use the \"Translate screen\" Quick Settings tile. On screen: tap the bubble for pinyin, again for the translation, again to close. Pinch to zoom.")
@@ -192,6 +200,9 @@ class SettingsActivity : AppCompatActivity() {
             KeepAlive.State.STUCK -> { svcTv.text = "● Stopped by the phone"; svcTv.setTextColor(cWarn); svcBtn.text = "Fix" }
             KeepAlive.State.OFF -> { svcTv.text = "○ Off"; svcTv.setTextColor(pal.muted); svcBtn.text = "Turn on" }
         }
+        val rep = KeepAlive.canSelfRepair(this)
+        repairTv.text = if (rep) "● Auto-repair on" else "○ Auto-repair off (one-time PC setup)"
+        repairTv.setTextColor(if (rep) cOk else pal.muted)
         val bat = KeepAlive.ignoringBattery(this)
         batTv.text = if (bat) "● Allowed to keep running" else "● Battery saver may stop it"
         batTv.setTextColor(if (bat) cOk else cWarn)
@@ -201,6 +212,22 @@ class SettingsActivity : AppCompatActivity() {
             modelsTv.setTextColor(if (ok) cOk else cWarn)
         }
         checkNet(force = false)
+    }
+
+    /** When/why Android ended the app (diagnostics), plus how to turn on auto-repair. */
+    private fun showStops() {
+        val last = prefs.lastRepair.takeIf { it > 0 }?.let {
+            "\nLast auto-repair: " + java.text.SimpleDateFormat("d MMM HH:mm", java.util.Locale.UK).format(java.util.Date(it)) } ?: ""
+        val msg = "Recent stops of roozTrans:\n${KeepAlive.exitReasons(this)}$last\n\n" +
+            (if (KeepAlive.canSelfRepair(this)) "Auto-repair is on: when the phone stops the screen translator, roozTrans turns it off and on again by itself."
+            else "Auto-repair (optional): connect the phone to a computer with USB debugging on and run once:\n\n${KeepAlive.GRANT_CMD}\n\n" +
+                "roozTrans can then turn the screen translator off and on again by itself when the phone stops it.")
+        androidx.appcompat.app.AlertDialog.Builder(this).setTitle("Screen translator stops").setMessage(msg)
+            .setPositiveButton("OK", null)
+            .setNeutralButton("Copy") { _, _ ->
+                (getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager)
+                    .setPrimaryClip(android.content.ClipData.newPlainText("roozTrans", msg))
+            }.show()
     }
 
     // ---------- building blocks ----------

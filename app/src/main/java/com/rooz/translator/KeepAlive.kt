@@ -37,6 +37,63 @@ object KeepAlive {
         else -> State.OFF
     }
 
+    /** One-time grant from a computer lets the app toggle its own service off/on, like the user would:
+     *  adb shell pm grant com.rooz.trans android.permission.WRITE_SECURE_SETTINGS */
+    fun canSelfRepair(ctx: Context) =
+        ctx.checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
+    const val GRANT_CMD = "adb shell pm grant com.rooz.trans android.permission.WRITE_SECURE_SETTINGS"
+
+    /**
+     * Switch the screen translator off and on again in Android's settings (exactly what the user does by hand).
+     * That clears Android's "crashed" mark and it binds the service again. Needs [canSelfRepair].
+     */
+    fun selfRepair(ctx: Context): Boolean {
+        if (!canSelfRepair(ctx) || TranslatorService.instance != null) return false
+        return runCatching {
+            val cr = ctx.contentResolver
+            val me = component(ctx)
+            val others = (Settings.Secure.getString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES) ?: "")
+                .split(':').filter { it.isNotBlank() && ComponentName.unflattenFromString(it) != me }
+            Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, others.joinToString(":"))
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                runCatching {
+                    Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, (others + me.flattenToString()).joinToString(":"))
+                    Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1)
+                }
+            }, 1000)
+            Prefs(ctx).lastRepair = System.currentTimeMillis()
+            true
+        }.getOrElse { android.util.Log.w("roozTrans", "self-repair failed", it); false }
+    }
+
+    /** Why Android ended the app's last few runs (Android 11+), newest first — tells us who killed it. */
+    fun exitReasons(ctx: Context): String {
+        val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val list = runCatching { am.getHistoricalProcessExitReasons(ctx.packageName, 0, 8) }.getOrDefault(emptyList())
+        if (list.isEmpty()) return "No stops recorded."
+        val fmt = java.text.SimpleDateFormat("d MMM HH:mm", java.util.Locale.UK)
+        return list.joinToString("\n") { e ->
+            val why = when (e.reason) {
+                android.app.ApplicationExitInfo.REASON_CRASH -> "app error"
+                android.app.ApplicationExitInfo.REASON_CRASH_NATIVE -> "app error (native)"
+                android.app.ApplicationExitInfo.REASON_ANR -> "not responding"
+                android.app.ApplicationExitInfo.REASON_LOW_MEMORY -> "low memory"
+                android.app.ApplicationExitInfo.REASON_USER_REQUESTED -> "force-stopped / app update"
+                android.app.ApplicationExitInfo.REASON_USER_STOPPED -> "stopped by user"
+                android.app.ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> "battery / resource limit"
+                android.app.ApplicationExitInfo.REASON_PERMISSION_CHANGE -> "permission changed"
+                android.app.ApplicationExitInfo.REASON_DEPENDENCY_DIED -> "dependency died"
+                android.app.ApplicationExitInfo.REASON_FREEZER -> "frozen"
+                android.app.ApplicationExitInfo.REASON_SIGNALED -> "killed (signal ${e.status})"
+                android.app.ApplicationExitInfo.REASON_EXIT_SELF -> "exited"
+                android.app.ApplicationExitInfo.REASON_INITIALIZATION_FAILURE -> "start failed"
+                else -> "other"
+            }
+            val d = e.description?.takeIf { it.isNotBlank() }?.let { " · ${it.take(60)}" } ?: ""
+            "${fmt.format(java.util.Date(e.timestamp))}  $why$d"
+        }
+    }
+
     fun ignoringBattery(ctx: Context) =
         (ctx.getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(ctx.packageName)
 

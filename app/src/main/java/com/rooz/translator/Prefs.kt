@@ -24,6 +24,10 @@ class Prefs(ctx: Context) {
     var a11yConsent by bool("a11y_consent", false)
     /** the service has connected at least once (so "not running" now means the phone stopped it) */
     var a11yWasOn by bool("a11y_was_on", false)
+    /** run a quiet foreground notification so the phone doesn't kill the screen translator while asleep */
+    var keepAlive by bool("keep_alive", true)
+    var notifAsked by bool("notif_asked", false)
+    var lastRepair by long("last_repair", 0L)
     /** show pinyin next to Chinese (text screen) and as the first step of the screen overlay */
     var showPinyin by bool("show_pinyin", true)
     /** first-run welcome / setup guide finished */
