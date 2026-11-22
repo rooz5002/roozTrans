@@ -94,6 +94,11 @@ object KeepAlive {
         }
     }
 
+    /** Android's Accessibility list. (A direct link to our own page, ACCESSIBILITY_DETAILS_SETTINGS, only works for
+     *  pre-installed apps: tested, it falls back to the list.) */
+    fun a11yIntents(ctx: Context): List<Intent> = listOf(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+    fun openA11y(a: AppCompatActivity) = start(a, a11yIntents(a))
+
     fun ignoringBattery(ctx: Context) =
         (ctx.getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(ctx.packageName)
 
@@ -161,13 +166,15 @@ object KeepAlive {
     fun showRepair(a: AppCompatActivity, st: State) {
         val fix = if (st == State.STUCK)
             "Android has stopped it, although it still looks switched on.\n\n" +
-            "Tap \"Accessibility\" below → Installed apps → roozTrans screen translator → turn it OFF, then ON again."
-        else "Your phone switched it off.\n\nTap \"Accessibility\" below → Installed apps → roozTrans screen translator → On."
+            "Tap \"Accessibility\" below → roozTrans screen translator → turn it OFF, then ON again.\n" +
+            "(On some phones it is under Installed apps or Downloaded apps.)"
+        else "Your phone switched it off.\n\nTap \"Accessibility\" below → roozTrans screen translator → On.\n" +
+            "(On some phones it is under Installed apps or Downloaded apps.)"
         AlertDialog.Builder(a)
             .setTitle("Screen translator stopped")
             .setMessage("$fix\n\nThis usually happens when a battery saver closes roozTrans while the phone sleeps. " +
                 "After fixing it, tap \"Keep it on\" so it doesn't happen again.")
-            .setPositiveButton("Accessibility") { _, _ -> start(a, listOf(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))) }
+            .setPositiveButton("Accessibility") { _, _ -> openA11y(a) }
             .setNeutralButton("Keep it on") { _, _ -> showGuide(a) }
             .setNegativeButton("Later", null)
             .show()

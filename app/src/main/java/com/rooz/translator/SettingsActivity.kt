@@ -112,6 +112,8 @@ class SettingsActivity : AppCompatActivity() {
         // ---------- 3. languages ----------
         root.addView(section("🔤", "Languages", cLang) {
             addView(status().apply { text = "English ⇄ 中文 (Simplified Chinese)"; setTextColor(pal.text) })
+            hint("My language: screens and photos are translated into it. Text already in your language is left as it is.")
+            addView(choice(listOf("en" to "English", "zh" to "中文"), prefs.myLang, cLang) { prefs.myLang = it })
             hint("More languages are coming in the next version.")
             addView(sw("Show pinyin (拼音) with Chinese", prefs.showPinyin) { prefs.showPinyin = it })
         })

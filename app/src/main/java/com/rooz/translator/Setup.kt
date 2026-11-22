@@ -26,13 +26,14 @@ fun AppCompatActivity.openAccessibilitySetup() {
 private fun AppCompatActivity.showAccessibilitySteps() {
     AlertDialog.Builder(this)
         .setTitle("Turn on screen translator")
-        .setMessage("1. Tap \"Accessibility\" below → Installed apps (or Downloaded apps) → roozTrans screen translator → On → Allow.\n\n" +
+        .setMessage("1. Tap \"Accessibility\" below → roozTrans screen translator → On → Allow. " +
+            "(On some phones it is under Installed apps or Downloaded apps.)\n\n" +
             "If it is greyed out, or you see \"Restricted setting\" / \"App was denied access\":\n" +
             "2. Tap \"App info\" below → ⋮ (top right) → Allow restricted settings → confirm.\n" +
             "3. Come back and do step 1 again.\n\n" +
             "Samsung: if ⋮ has no such option, turn off Settings → Security and privacy → Auto Blocker first.\n\n" +
             "When it's on, the bubble appears at the edge of the screen. Drag it anywhere; tap it to translate.")
-        .setPositiveButton("Accessibility") { _, _ -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+        .setPositiveButton("Accessibility") { _, _ -> KeepAlive.openA11y(this) }
         .setNeutralButton("App info") { _, _ ->
             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
         }

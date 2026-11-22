@@ -57,7 +57,7 @@ class ImageActivity : AppCompatActivity() {
         val bmp = runCatching { withContext(Dispatchers.IO) { decode(uri) } }.getOrElse { status.text = "Can't open image: ${it.message}"; return@launch }
         source = bmp; img.setImageBitmap(bmp)
         val found = runCatching { Offline.ocr(bmp) }.getOrElse { status.text = "Text reading failed: ${it.message}"; return@launch }
-        dir = Lang.dominant(found.map { it.original })
+        dir = Lang.forScreen(found.map { it.original }, Prefs(this@ImageActivity).myLang)
         items = found.filter { Lang.needs(it.original, dir) }
         if (dir == Dir.ZH_EN) withContext(Dispatchers.Default) { items.forEach { it.pinyin = Pinyin.of(it.original) } }
         if (items.isEmpty()) { status.text = "No ${dir.srcName} text found"; return@launch }

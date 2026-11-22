@@ -19,6 +19,7 @@ data class TextItem(val rect: Rect, val original: String, val lineHeight: Int, v
 
 /** Everything that runs on the phone with no internet. */
 object Offline {
+    private const val MIN_CONF = 0.6f
     // Chinese recognizer also reads Latin script. Model is bundled in the APK (no download).
     private var rec: com.google.mlkit.vision.text.TextRecognizer? = null
     private val recognizer get() = synchronized(this) { rec ?: TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build()).also { rec = it } }
@@ -39,6 +40,9 @@ object Offline {
             val box = b.boundingBox ?: return@mapNotNull null
             val lines = b.lines.map { it.text.trim() }.filter { it.isNotEmpty() }
             if (lines.isEmpty()) return@mapNotNull null
+            // icons (back arrow, cast, menu) are often "read" as one or two characters with low confidence: skip them
+            val conf = b.lines.map { it.confidence }.average().toFloat()
+            if (conf < MIN_CONF && lines.joinToString("").length <= 3) return@mapNotNull null
             // Chinese lines join without spaces, English lines with a space
             val joined = if (Lang.isChinese(lines.joinToString(""))) lines.joinToString("") else lines.joinToString(" ")
             val lh = b.lines.mapNotNull { it.boundingBox?.height() }.average().takeIf { !it.isNaN() }?.toInt() ?: box.height()

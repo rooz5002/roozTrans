@@ -52,6 +52,8 @@ class Prefs(ctx: Context) {
     var theme by str("theme", "clay")
     /** 0 = auto-detect, 1 = EN → 中, 2 = 中 → EN */
     var dirMode by int("dir_mode", 0)
+    /** The language the user reads: screens and photos are translated INTO it. "en" or "zh"; default from the phone's language. */
+    var myLang by str("my_lang", if (java.util.Locale.getDefault().language == "zh") "zh" else "en")
 
     var bubbleX by int("bubble_x", 0)
     var bubbleY by int("bubble_y", 400)

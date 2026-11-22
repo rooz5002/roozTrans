@@ -28,7 +28,7 @@ class OverlayRenderer(private val density: Float) {
         val pad = 2f * density
         val rr = 4f * density
         for (it in items) {
-            val text = textOf(it) ?: continue
+            val text = textOf(it)?.takeIf { t -> t.isNotBlank() } ?: continue
             val r = RectF(it.rect.left * scale + dx - pad, it.rect.top * scale + dy - pad,
                           it.rect.right * scale + dx + pad, it.rect.bottom * scale + dy + pad)
             val startSize = (it.lineHeight * scale * 0.8f).coerceIn(minPx, 40f * density)

@@ -225,8 +225,12 @@ class TranslatorService : AccessibilityService() {
     private suspend fun process(bmp: Bitmap) {
         setBubbleWorking(true)
         val items = runCatching { Offline.ocr(bmp) }.getOrElse { setBubbleWorking(false); done("Text reading failed: ${it.message}"); return }
-        val dir = Lang.dominant(items.map { it.original })
-        val todo = items.filter { Lang.needs(it.original, dir) }
+        // ignore the status bar (clock, signal, battery): it is not part of what the user wants translated
+        val sbId = resources.getIdentifier("status_bar_height", "dimen", "android")
+        val top = if (sbId > 0) resources.getDimensionPixelSize(sbId) else 0
+        val content = items.filter { it.rect.centerY() > top }
+        val dir = Lang.forScreen(content.map { it.original }, prefs.myLang)
+        val todo = content.filter { Lang.needs(it.original, dir) }
         if (todo.isEmpty()) { setBubbleWorking(false); done("No ${dir.srcName} text found"); return }
 
         val view = showOverlay(todo, dir, bmp)

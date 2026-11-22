@@ -28,6 +28,21 @@ object Lang {
         return if (h >= l && h > 0) Dir.ZH_EN else Dir.EN_ZH
     }
 
+    /**
+     * For a screen or photo: translate whatever is NOT in the user's language into it (an English reader on a mostly
+     * English page with a few Chinese parts gets just those parts in English). Only if nothing on screen is foreign
+     * does it go the other way, e.g. to show an English page in Chinese.
+     */
+    fun forScreen(texts: List<String>, myLang: String): Dir {
+        val into = if (myLang == "zh") Dir.EN_ZH else Dir.ZH_EN
+        val other = if (into == Dir.ZH_EN) Dir.EN_ZH else Dir.ZH_EN
+        return when {
+            texts.any { needs(it, into) } -> into
+            texts.any { needs(it, other) } -> other
+            else -> into
+        }
+    }
+
     /** Does this block belong to the source language of [dir] (and so need translating)? */
     fun needs(s: String, dir: Dir): Boolean =
         hasLetters(s) && (if (dir == Dir.ZH_EN) score(s).first > 0 else isChinese(s).not())
