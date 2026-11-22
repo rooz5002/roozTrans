@@ -201,7 +201,7 @@ class SettingsActivity : AppCompatActivity() {
             KeepAlive.State.OFF -> { svcTv.text = "○ Off"; svcTv.setTextColor(pal.muted); svcBtn.text = "Turn on" }
         }
         val rep = KeepAlive.canSelfRepair(this)
-        repairTv.text = if (rep) "● Auto-repair on" else "○ Auto-repair off (one-time PC setup)"
+        repairTv.text = if (!BuildConfig.SELF_REPAIR) "Stop history" else if (rep) "● Auto-repair on" else "○ Auto-repair off (one-time PC setup)"
         repairTv.setTextColor(if (rep) cOk else pal.muted)
         val bat = KeepAlive.ignoringBattery(this)
         batTv.text = if (bat) "● Allowed to keep running" else "● Battery saver may stop it"
@@ -220,6 +220,7 @@ class SettingsActivity : AppCompatActivity() {
             "\nLast auto-repair: " + java.text.SimpleDateFormat("d MMM HH:mm", java.util.Locale.UK).format(java.util.Date(it)) } ?: ""
         val msg = "Recent stops of roozTrans:\n${KeepAlive.exitReasons(this)}$last\n\n" +
             (if (KeepAlive.canSelfRepair(this)) "Auto-repair is on: when the phone stops the screen translator, roozTrans turns it off and on again by itself."
+            else if (!BuildConfig.SELF_REPAIR) "If it stops often, tap \"Keep it on\" and set roozTrans to Unrestricted battery use."
             else "Auto-repair (optional): connect the phone to a computer with USB debugging on and run once:\n\n${KeepAlive.GRANT_CMD}\n\n" +
                 "roozTrans can then turn the screen translator off and on again by itself when the phone stops it.")
         androidx.appcompat.app.AlertDialog.Builder(this).setTitle("Screen translator stops").setMessage(msg)

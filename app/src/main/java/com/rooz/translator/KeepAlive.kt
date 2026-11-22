@@ -39,7 +39,7 @@ object KeepAlive {
 
     /** One-time grant from a computer lets the app toggle its own service off/on, like the user would:
      *  adb shell pm grant com.rooz.trans android.permission.WRITE_SECURE_SETTINGS */
-    fun canSelfRepair(ctx: Context) =
+    fun canSelfRepair(ctx: Context) = BuildConfig.SELF_REPAIR &&
         ctx.checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED
     const val GRANT_CMD = "adb shell pm grant com.rooz.trans android.permission.WRITE_SECURE_SETTINGS"
 

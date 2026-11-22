@@ -13,6 +13,8 @@ Screen translation. When the user taps the floating bubble, taps the "Translate 
 - `canRetrieveWindowContent="false"`: it does not read other apps' view hierarchy or text.
 - It performs no gestures, taps or text input in other apps. The only system actions are both user-triggered: (a) after a tap on the Quick Settings tile it closes the notification panel (`GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE`) so the screen underneath can be captured; (b) after a Volume Down double-press it raises the volume one step to undo the first press.
 - It never captures without a user trigger.
+- It never changes the user's settings. "Turn off" on the main screen calls `disableSelf()`, at the user's request. Turning it on always goes through the disclosure and Android's own Accessibility settings. (The auto-repair in the self-distributed build needs `WRITE_SECURE_SETTINGS`, which is **not** in the Play build.)
+- An optional foreground service ("Screen translator ready" notification, see `foreground-service.md`) keeps the app's process alive while the phone sleeps. It has no accessibility function of its own, and the user can switch it off in Settings.
 - Key filtering acts only on Volume Down. Every other key is passed through untouched and not recorded.
 - Screenshots are processed in memory and discarded. They are never stored or uploaded.
 
@@ -34,6 +36,8 @@ If the way the app uses the service ever changes, submit this form again.
 - **Store listing:** the full description also has a "Use of the Accessibility service" section. The policy page does not strictly require this, but it helps reviewers. The in-app dialog is what counts; the listing text cannot replace it.
 
 ## Video (required)
+Record it with the **1.8.2** Play build, so the screens match what reviewers install. The same video can also show the keep-running notification for the foreground-service form (step 8).
+
 Record about 60 to 90 seconds on a phone (screen recorder), upload it to YouTube as **Unlisted**, and paste the link in the form. Google's checklist requires the app opening, the **whole** disclosure (scroll slowly if it scrolls), **both** the decline and the consent flow, and a core feature. Show:
 1. A fresh install: open roozTrans from the launcher, landing on the Welcome screen.
 2. Tap "Turn on screen translator". Let the full disclosure stay on screen for a few seconds, then tap **No thanks**. Show that nothing is turned on.
@@ -42,5 +46,6 @@ Record about 60 to 90 seconds on a phone (screen recorder), upload it to YouTube
 5. Opening another app with Chinese text, then tapping the bubble.
 6. The translation overlay appearing, then tapping to close it.
 7. Optionally, a Volume Down double-press doing the same.
+8. Pull down the notification shade: the "Screen translator ready" notification, tapping its **Translate screen** button, then Settings → Screen translator → turning off "Keep running while asleep" and the notification going away.
 
 Add short captions (or a voice-over) naming each step, e.g. "Declining consent", "Granting consent", "Core feature: screen translation". Remove any personal notifications from the recording.

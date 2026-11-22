@@ -42,9 +42,11 @@ android {
             dimension = "dist"
             buildConfigField("String", "UPDATE_URL", "\"${deploy.getProperty("updateUrl", "")}\"")
             buildConfigField("String", "UPDATE_TOKEN", "\"$updateToken\"")
+            buildConfigField("boolean", "SELF_REPAIR", "true")
         }
         create("play") {
             dimension = "dist"
+            buildConfigField("boolean", "SELF_REPAIR", "false")   // no WRITE_SECURE_SETTINGS on Play
             ndk { abiFilters += "armeabi-v7a" }   // Play splits per device, so older 32-bit phones cost nothing extra
         }
     }
