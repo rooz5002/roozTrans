@@ -140,6 +140,7 @@ class TranslatorService : AccessibilityService() {
         val lp = WindowManager.LayoutParams(size, size, WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START; x = prefs.bubbleX; y = prefs.bubbleY }
+        clampBubble(lp)
 
         var downX = 0f; var downY = 0f; var startX = 0; var startY = 0; var moved = false; var downAt = 0L
         v.setOnTouchListener { _, e ->
@@ -148,7 +149,7 @@ class TranslatorService : AccessibilityService() {
                 MotionEvent.ACTION_MOVE -> {
                     val mx = e.rawX - downX; val my = e.rawY - downY
                     if (abs(mx) > 12 * dp || abs(my) > 12 * dp) moved = true
-                    if (moved) { lp.x = startX + mx.toInt(); lp.y = startY + my.toInt(); wm.updateViewLayout(v, lp) }
+                    if (moved) { lp.x = startX + mx.toInt(); lp.y = startY + my.toInt(); clampBubble(lp); wm.updateViewLayout(v, lp) }
                 }
                 MotionEvent.ACTION_UP -> safe {
                     if (moved) { prefs.bubbleX = lp.x; prefs.bubbleY = lp.y }
@@ -159,6 +160,27 @@ class TranslatorService : AccessibilityService() {
             true
         }
         wm.addView(v, lp); bubble = v; bubbleLp = lp
+    }
+
+    /**
+     * Keep the bubble on screen. A position saved while the phone was sideways (or at another screen resolution)
+     * can be far off-screen once it is upright again: the service is on but the bubble is invisible.
+     */
+    private fun clampBubble(lp: WindowManager.LayoutParams) {
+        val b = wm.currentWindowMetrics.bounds
+        lp.x = lp.x.coerceIn(0, (b.width() - lp.width).coerceAtLeast(0))
+        lp.y = lp.y.coerceIn(0, (b.height() - lp.height).coerceAtLeast(0))
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        safe {
+            val v = bubble ?: return@safe
+            val lp = bubbleLp ?: return@safe
+            lp.x = prefs.bubbleX; lp.y = prefs.bubbleY   // try the saved spot again, then keep it on this screen
+            clampBubble(lp)
+            if (v.isAttachedToWindow) wm.updateViewLayout(v, lp)
+        }
     }
 
     private fun openApp() = startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
