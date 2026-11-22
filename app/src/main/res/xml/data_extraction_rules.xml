@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: API keys are never uploaded to Google backup. A direct phone-to-phone transfer
+     (cable or local Wi-Fi, with the user present) may still copy them to the user's new phone. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="keys.xml" />
+    </cloud-backup>
+</data-extraction-rules>

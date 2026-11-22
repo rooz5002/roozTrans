@@ -3,13 +3,33 @@ package com.rooz.translator
 import android.content.Context
 import android.content.SharedPreferences
 
-/** All settings live in the app's private SharedPreferences (never leaves the phone). */
+/**
+ * All settings live in the app's private SharedPreferences. Ordinary settings ("settings") may be included in
+ * Android's backup to the user's Google account; API keys live in a separate file ("keys") that is excluded from
+ * cloud backup (res/xml/backup_rules.xml, data_extraction_rules.xml).
+ */
 class Prefs(ctx: Context) {
     private val p: SharedPreferences = ctx.applicationContext.getSharedPreferences("settings", Context.MODE_PRIVATE)
+    private val k: SharedPreferences = ctx.applicationContext.getSharedPreferences(KEYS_FILE, Context.MODE_PRIVATE)
 
-    var claudeKey by str("claude_key", "")
-    var openaiKey by str("openai_key", "")
-    var deepseekKey by str("deepseek_key", "")
+    init { migrateKeys() }
+
+    /** Up to 1.8.2 the keys were in "settings": move them once. */
+    private fun migrateKeys() {
+        val old = KEY_NAMES.filter { p.contains(it) }
+        if (old.isEmpty()) return
+        val e = k.edit()
+        old.forEach { n ->
+            val v = p.getString(n, "").orEmpty()
+            if (v.isNotBlank() || k.getString(n, "").isNullOrBlank()) e.putString(n, v)
+        }
+        e.commit()
+        p.edit().apply { old.forEach { remove(it) } }.apply()
+    }
+
+    var claudeKey by key("claude_key")
+    var openaiKey by key("openai_key")
+    var deepseekKey by key("deepseek_key")
     var claudeModel by str("claude_model", "claude-opus-5-5")
     var openaiModel by str("openai_model", "gpt-5-mini")
     var deepseekModel by str("deepseek_model", "deepseek-chat")
@@ -57,6 +77,17 @@ class Prefs(ctx: Context) {
 
     var bubbleX by int("bubble_x", 0)
     var bubbleY by int("bubble_y", 400)
+
+    private fun key(n: String) = object : kotlin.properties.ReadWriteProperty<Any?, String> {
+        override fun getValue(thisRef: Any?, property: kotlin.reflect.KProperty<*>) = k.getString(n, "") ?: ""
+        override fun setValue(thisRef: Any?, property: kotlin.reflect.KProperty<*>, value: String) =
+            k.edit().putString(n, value.trim()).apply()
+    }
+
+    companion object {
+        const val KEYS_FILE = "keys"
+        private val KEY_NAMES = listOf("claude_key", "openai_key", "deepseek_key")
+    }
 
     private fun str(k: String, d: String) = object : kotlin.properties.ReadWriteProperty<Any?, String> {
         override fun getValue(thisRef: Any?, property: kotlin.reflect.KProperty<*>) = p.getString(k, d) ?: d

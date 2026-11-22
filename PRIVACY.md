@@ -1,12 +1,12 @@
 # roozTrans — Privacy Policy
 
-_Last updated: 22 November 2026_
+_Last updated: 23 November 2026_
 
 roozTrans is built to keep your data on your phone. **The developer does not collect, store, sell or share any personal data.** There are no ads, no analytics, no tracking and no accounts.
 
 ## What stays on your phone
 - **Text you type, photos you choose, and screenshots** are processed on the phone. Screenshots taken by the screen translator are kept only in memory long enough to read the text, then discarded. They are never saved or uploaded.
-- **Settings and API keys** are stored in the app's private storage on your phone. Uninstalling the app deletes them. (Android's own device backup may include app settings if you have backup turned on.)
+- **Settings and API keys** are stored in the app's private storage on your phone. Uninstalling the app deletes them. (If you have Android's backup to your Google account turned on, it may include your ordinary app settings, such as theme and language, but never your API keys. They stay on the phone; a direct phone-to-phone transfer to your new phone may copy them.)
 
 ## When data leaves your phone
 Only in these cases:

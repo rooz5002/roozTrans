@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 and older backup: API keys stay on the phone (see Prefs.KEYS_FILE). -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="keys.xml" />
+</full-backup-content>
