@@ -200,6 +200,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @Deprecated("platform API")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // the "ready" notification was posted before permission existed and stays hidden: post it again now
+        if (requestCode == 7 && grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED)
+            KeepAliveService.start(this)
+    }
+
     private fun showService(st: KeepAlive.State = KeepAlive.state(this)) {
         when {
             st == KeepAlive.State.RUNNING -> { svcTv.text = "● Screen translator on"; svcBtn.text = "Turn off" }

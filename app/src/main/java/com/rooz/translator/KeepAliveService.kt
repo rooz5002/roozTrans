@@ -94,5 +94,8 @@ class KeepAliveService : Service() {
             .build()
         if (Build.VERSION.SDK_INT >= 34) startForeground(ID_RUN, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         else startForeground(ID_RUN, n)
+        // startForeground() does not re-show a notification that was hidden because notification permission was
+        // missing when it was first posted (first run); posting it again by id does.
+        runCatching { getSystemService(NotificationManager::class.java).notify(ID_RUN, n) }
     }
 }
