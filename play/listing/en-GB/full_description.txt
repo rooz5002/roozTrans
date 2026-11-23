@@ -4,6 +4,7 @@ TRANSLATE ANYTHING
 • Text: type or paste, and get the translation instantly
 • Photos: take a picture or choose one, and the translation is drawn over the original text
 • Your screen: tap the floating bubble, use the "Translate screen" Quick Settings tile, or double-press Volume Down to translate whatever is on screen in any app
+• Into your language: on a screen that mixes English and Chinese, only the parts that aren't in your language are translated
 • Pinyin: see the pinyin (with tones) for Chinese, whichever way you translate. On screen, tap the bubble once for pinyin, again for English, and once more to close. Pinch to zoom into dense text
 • Select text in any app and choose "roozTrans" from the menu, or share text and images to roozTrans
 
@@ -19,6 +20,8 @@ The screen translator uses Android's Accessibility service. roozTrans uses it ON
 • take a screenshot when you tap the bubble or the Quick Settings tile, or double-press Volume Down
 • detect that Volume Down double-press (no other keys are read)
 The screenshot is read on your phone and then discarded. It is never saved or uploaded. roozTrans does not read your screen in the background, does not collect personal data through this service, and does not control other apps. The app explains this and asks for your consent before you turn it on, and you can turn it off at any time in Settings → Accessibility. The text, photo and share features work without it.
+
+A quiet "Screen translator ready" notification keeps the screen translator available while the phone sleeps. You can turn it off in Settings.
 
 PRIVACY
 No account, no ads, no analytics. The developer never receives what you translate. Only text (never images) is sent online, and only if you turn on online translation with your own key.
