@@ -13,6 +13,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** One piece of text found on a screen/photo, plus its translation once we have it. */
 data class TextItem(val rect: Rect, val original: String, val lineHeight: Int, val lineCount: Int = 1, var translated: String? = null, var pinyin: String? = null)
@@ -68,10 +69,17 @@ object Offline {
     }
 
     /** Needs internet to Google (do it before entering China). ~30 MB per language. */
-    suspend fun downloadModels() {
+    suspend fun downloadModels(ctx: android.content.Context) {
+        // ML Kit waits silently for a network that never comes, so check first and give up eventually.
+        val cm = ctx.getSystemService(android.net.ConnectivityManager::class.java)
+        val caps = cm?.getNetworkCapabilities(cm.activeNetwork)
+        if (caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) != true)
+            throw java.io.IOException("no internet connection")
         val cond = DownloadConditions.Builder().build()
-        translator(Dir.EN_ZH).downloadModelIfNeeded(cond).await()
-        translator(Dir.ZH_EN).downloadModelIfNeeded(cond).await()
+        withTimeoutOrNull(10 * 60_000L) {
+            translator(Dir.EN_ZH).downloadModelIfNeeded(cond).await()
+            translator(Dir.ZH_EN).downloadModelIfNeeded(cond).await()
+        } ?: throw java.io.IOException("no progress after 10 minutes (Google may be blocked on this network)")
     }
 
     suspend fun translate(texts: List<String>, dir: Dir): List<String> {

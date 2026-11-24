@@ -62,7 +62,7 @@ class WelcomeActivity : AppCompatActivity() {
                 addView(button("Download now", outlined = true) {
                     packsTv.text = "⏳ Downloading…"
                     lifecycleScope.launch {
-                        runCatching { Offline.downloadModels() }
+                        runCatching { Offline.downloadModels(this@WelcomeActivity) }
                             .onSuccess { packsTv.text = "✅ Offline English/中文 ready" }
                             .onFailure { packsTv.text = "✗ Failed: ${it.message}. Try again on another network, or later in Settings." }
                     }

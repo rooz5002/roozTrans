@@ -389,7 +389,7 @@ class SettingsActivity : AppCompatActivity() {
     private fun downloadModels() {
         modelsTv.text = "⏳ Downloading (~60 MB)…"; modelsTv.setTextColor(pal.text)
         lifecycleScope.launch {
-            runCatching { Offline.downloadModels() }
+            runCatching { Offline.downloadModels(this@SettingsActivity) }
                 .onSuccess { modelsTv.text = "● English/中文 packs ready"; modelsTv.setTextColor(cOk) }
                 .onFailure { modelsTv.text = "✗ Download failed: ${it.message} (Google is blocked in China: use a VPN)"; modelsTv.setTextColor(cWarn) }
         }
