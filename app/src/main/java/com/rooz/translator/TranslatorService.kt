@@ -121,18 +121,18 @@ class TranslatorService : AccessibilityService() {
         bubble?.background = bubbleBg()
     }
 
-    /** Round bubble in the chosen colour theme's accent, with a white ring. */
+    /** Round bubble in the logo's navy, with a white ring. */
     private fun bubbleBg() = android.graphics.drawable.GradientDrawable().apply {
         shape = android.graphics.drawable.GradientDrawable.OVAL
-        val a = Themes.current(this@TranslatorService).accent
-        setColor((a and 0x00FFFFFF) or (0xDD shl 24)); setStroke((2 * resources.displayMetrics.density).toInt(), android.graphics.Color.WHITE)
+        setColor((getColor(R.color.launcher_bg) and 0x00FFFFFF) or (0xDD shl 24))
+        setStroke((2 * resources.displayMetrics.density).toInt(), android.graphics.Color.WHITE)
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun addBubble() {
         val size = (52 * dp).toInt()
         val v = ImageView(this).apply {
-            setImageResource(R.drawable.ic_bubble)
+            setImageResource(R.drawable.ic_bubble_logo)
             background = bubbleBg()
             val p = (12 * dp).toInt(); setPadding(p, p, p, p)
             alpha = 0.85f

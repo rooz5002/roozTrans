@@ -10,7 +10,7 @@ play/
 ├── listing/en-GB/                 ← title, short and full description (paste into the Console)
 ├── graphics/                      ← icon-512.png, feature-1024x500.png, screenshots/ (1080×2160)
 ├── declarations/                  ← Accessibility, Data safety, other App-content answers
-└── tools/make-graphics.py         ← regenerates icon and feature graphic from the app icon
+└── tools/make-logo.py             ← the logo (R + 译): writes the app icons, icon-512 and feature graphic
 ```
 
 ## Checklist
