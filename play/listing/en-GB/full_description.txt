@@ -1,4 +1,4 @@
-roozTrans is a simple, free English ⇄ Chinese translator with no ads, no account and no tracking. It was made for travel, including mainland China, and works offline.
+roozTrans is a simple, free English ⇄ Chinese translator with no ads, no account and no tracking. It was made for Chinese apps, signs and travel, including in mainland China, and it works offline.
 
 TRANSLATE ANYTHING
 • Text: type or paste, and get the translation instantly
